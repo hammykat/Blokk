@@ -74,10 +74,53 @@ bool Init##Name(Name *Arr) {                    \
 void Destroy##Name(Name *Arr) { \
     free(Arr->Items);                           \
     Arr->Items = NULL;                          \
-    Arr->Size - 0;                              \
+    Arr->Size = 0;                              \
     Arr->Capacity = 0;                          \
 }                                               \
 \
 bool Name##IsEmpty(Name *Arr) {                 \
     return Arr->Size == 0;                      \
+} \
+\
+void SetIn##Name(Name*Arr, int Idx, Type Item) { \
+    Arr->Items[Idx] = Item; \
+} \
+\
+void Clear##Name(Name *Arr) { \
+    Arr->Size = 0; \
+} \
+\
+bool Reserve##Name(Name *Arr, int Capacity) {   \
+    Type *NewItems = realloc(Arr->Items, Capacity * sizeof(Type)); \
+    if(NewItems == NULL) { \
+        return false; \
+    } \
+    Arr->Capacity = Capacity; \
+    Arr->Items = NewItems; \
+    return true; \
+} \
+\
+bool Name##Contains(Name *Arr, Type Item) { \
+    const int Count = Arr->Size; \
+    Type *Items = Arr->Items; \
+    for(int i = 0; i < Count; i++) { \
+        if(Items[i] == Item) {return true;} \
+    } \
+} \
+\
+int FindIn##Name(Name *Arr, Type Item) { \
+    const int Count = Arr->Size; \
+    Type *Items = Arr->Items; \
+    for(int i = 0; i < Count; i++) { \
+        if(Items[i] == Item) {return i;} \
+    } \
+    return -1; \
+} \
+\
+void Reverse##Name(Name *Arr) { \
+    for (int i = 0; i < Arr->Size / 2; i++) { \
+        Type Temp = Arr->Items[i]; \
+        Arr->Items[i] = Arr->Items[Arr->Size - 1 - i]; \
+        Arr->Items[Arr->Size - 1 - i] = Temp; \
+    } \
 }
