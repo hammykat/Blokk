@@ -76,4 +76,8 @@ void Destroy##Name(Name *Arr) { \
     Arr->Items = NULL;                          \
     Arr->Size - 0;                              \
     Arr->Capacity = 0;                          \
+}                                               \
+\
+bool Name##IsEmpty(Name *Arr) {                 \
+    return Arr->Size == 0;                      \
 }
