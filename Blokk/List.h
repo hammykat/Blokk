@@ -1,4 +1,3 @@
-
 #include "raylib.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -17,7 +16,7 @@ Type GetFrom##Name(Name *Arr, int Idx) {        \
 \
 bool AddTo##Name(Name *Arr, Type Item) {        \
     if(Arr->Size >= Arr->Capacity) {            \
-        Arr->Capacity *= 2;                     \
+        Arr->Capacity = Arr->Capacity > 0 ? Arr->Capacity * 2 : 4; \
         Type *NewItems = realloc(Arr->Items, Arr->Capacity * sizeof(Type)); \
         if(NewItems == NULL) {                  \
             return false;                       \
@@ -34,7 +33,8 @@ void RemoveFrom##Name(Name *Arr, int Idx) {     \
         Arr->Items[i] = Arr->Items[i + 1];      \
     }                                           \
     Arr->Size--;                                \
-} \
+}                                               \
+\
 void RemoveSwapFrom##Name(Name *Arr, int Idx) { \
     Arr->Items[Idx] = Arr->Items[Arr->Size - 1];\
     Arr->Size--;                                \
@@ -59,28 +59,8 @@ bool InsertInto##Name(Name *Arr, Type Item, int Idx) {  \
     Arr->Size++;                                \
     return true;                                \
 }                                               \
-bool InsertInto##Name(Name *Arr, Type Item, int Idx) { \
-    if(Idx < 0 || Idx > Arr->Size) {            \
-        return false;                           \
-    }                                           \
-    if(Arr->Size >= Arr->Capacity) {            \
-        Arr->Capacity *= 2;                     \
-        Type *NewItems = realloc(Arr->Items, Arr->Capacity * sizeof(Type)); \
-    }                                           \
-    if(NewItems == NULL) {                      \
-        return false;                           \
-    }                                           \
-    Arr->Items = NewItems;                      \
-    \
-    for(int i = Arr->Size; i > Idx; i--) {      \
-        Arr->Items[i] = Arr->Items[i - 1];      \
-    }                                           \
-    Arr->Items[Idx] = Item;                     \
-    Arr->Size++                                 \
-    return true;                                \
-}                                               \
 \
-bool InitList##Name(Name *Arr) {                \
+bool Init##Name(Name *Arr) {                    \
     Arr->Size = 0;                              \
     Arr->Capacity = 5;                          \
     Arr->Items = malloc(5 * sizeof(Type));      \
@@ -89,4 +69,11 @@ bool InitList##Name(Name *Arr) {                \
         return false;                           \
     }                                           \
     return true;                                \
+}                                               \
+\
+void Destroy##Name(Name *Arr) { \
+    free(Arr->Items);                           \
+    Arr->Items = NULL;                          \
+    Arr->Size - 0;                              \
+    Arr->Capacity = 0;                          \
 }
