@@ -1,4 +1,3 @@
-
 #include "raylib.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -12,14 +11,14 @@ typedef struct { \
     int Capacity; \
 } Name; \
 \
-Type GetItemFrom##Name(Name *Stack, int Idx) { \
+Type Name##_Get(Name *Stack, int Idx) { \
     const int TargetIdx = Stack->Start + Idx; \
     BLOKK_ReturnIfFalse(TargetIdx > Stack->End, (Type){0}); \
     \
     return Stack->Items[TargetIdx]; \
 } \
 \
-bool Name##Enqueue(Name *Stack, Type Item) { \
+bool Name##_Enqueue(Name *Stack, Type Item) { \
     if(Stack->End + 1 >= Stack->Capacity) { \
         Stack->Capacity *= 2; \
         Type *NewItems = realloc(Stack->Items, Stack->Capacity * sizeof(Type)); \
@@ -34,7 +33,7 @@ bool Name##Enqueue(Name *Stack, Type Item) { \
     return true; \
 } \
 \
-void RemoveFrom##Name(Name *Stack, int Idx) { \
+void Name##_Remove(Name *Stack, int Idx) { \
     BLOKK_ReturnIfFalse(Idx < Stack->Start || Idx > Stack->End,); \
     \
     const int Start = Stack->Start; const int End = Stack->End; \
@@ -44,7 +43,7 @@ void RemoveFrom##Name(Name *Stack, int Idx) { \
     Stack->End--; \
 } \
 \
-void RemoveSwapFrom##Name(Name *Stack, int Idx) { \
+void Name##_RemoveSwap(Name *Stack, int Idx) { \
     const int TargetIdx = Stack->Start + Idx; \
     BLOKK_ReturnIfFalse(TargetIdx < Stack->End,); \
     \
@@ -52,7 +51,7 @@ void RemoveSwapFrom##Name(Name *Stack, int Idx) { \
     Stack->End--; \
 } \
 \
-bool InsertInto##Name(Name *Stack, Type Item, int Idx) { \
+bool Name##_Insert(Name *Stack, Type Item, int Idx) { \
     BLOKK_ReturnIfFalse(Idx < Stack->Start || Idx > Stack->End, false); \
     \
     if(Stack->End >= Stack->Capacity) {            \
@@ -73,7 +72,7 @@ bool InsertInto##Name(Name *Stack, Type Item, int Idx) { \
     return true; \
 } \
 \
-bool Init##Name(Name *Stack) { \
+bool Name##_Init(Name *Stack) { \
     Stack->Start = 0; \
     Stack->End = -1; \
     Stack->Capacity = 5; \
@@ -85,7 +84,7 @@ bool Init##Name(Name *Stack) { \
     return true; \
 } \
 \
-void Destroy##Name(Name *Stack) { \
+void Name##_Destroy(Name *Stack) { \
     free(Stack->Items); \
     Stack->Items = NULL; \
     Stack->Start = 0; \
@@ -93,20 +92,20 @@ void Destroy##Name(Name *Stack) { \
     Stack->Capacity = 0; \
 } \
 \
-bool Name##IsEmpty(Name *Stack) { \
+bool Name##_IsEmpty(Name *Stack) { \
     return Stack->End == -1; \
 } \
 \
-void SetIn##Name(Name*Stack, int Idx, Type Item) { \
+void Name##_SetIn(Name*Stack, int Idx, Type Item) { \
     Stack->Items[Stack->Start + Idx] = Item; \
 } \
 \
-void Clear##Name(Name *Stack) { \
+void Name##_Clear(Name *Stack) { \
     Stack->Start = 0; \
     Stack->End = -1; \
 } \
 \
-bool Reserve##Name(Name *Stack, int Capacity) {   \
+bool Name##_Reserve(Name *Stack, int Capacity) {   \
     Type *NewItems = realloc(Stack->Items, Capacity * sizeof(Type)); \
     if(NewItems == NULL) { \
         return false; \
@@ -116,7 +115,7 @@ bool Reserve##Name(Name *Stack, int Capacity) {   \
     return true; \
 } \
 \
-bool Name##Contains(Name *Stack, Type Item) { \
+bool Name##_Contains(Name *Stack, Type Item) { \
     const int Start = Stack->Start; const int End = Stack->End; \
     Type *Items = Stack->Items; \
     for(int i = Start; i <= End; i++) { \
@@ -125,7 +124,7 @@ bool Name##Contains(Name *Stack, Type Item) { \
     return false; \
 } \
 \
-int FindIn##Name(Name *Stack, Type Item) { \
+int Name##_Find(Name *Stack, Type Item) { \
     const int Start = Stack->Start; const int End = Stack->End; \
     Type *Items = Stack->Items; \
     for(int i = Start; i <= End; i++) { \
@@ -134,7 +133,7 @@ int FindIn##Name(Name *Stack, Type Item) { \
     return -1; \
 } \
 \
-void Reverse##Name(Name *Stack) { \
+void Name##_Reverse(Name *Stack) { \
     CleanUp##Name(Stack); \
     const int End = Stack->End; \
     for (int i = 0; i <= End / 2; i++) { \
@@ -144,21 +143,21 @@ void Reverse##Name(Name *Stack) { \
     } \
 } \
 \
-Type Name##PeekFront(Name *Stack) { \
+Type Name##_PeekFront(Name *Stack) { \
     return Stack->Items[Stack->Start]; \
 } \
 \
-Type Name##PeekBack(Name *Stack) { \
+Type Name##_PeekBack(Name *Stack) { \
     return Stack->Items[Stack->End]; \
 } \
 \
-Type Dequeue##Name(Name *Stack) { \
+Type Name##_Dequeue(Name *Stack) { \
     Type Result = Stack->Items[Stack->Start]; \
     Stack->Start++; \
     return Result; \
 } \
 \
-void CleanUp##Name(Name *Stack) { \
+void Name##_CleanUp(Name *Stack) { \
     Type *Items = Stack->Items; \
     int End = Stack->End; int Start = Stack->Start; \
     Type *NewItems = malloc((End - Start + 1) * sizeof(Type)); \
