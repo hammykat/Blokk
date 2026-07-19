@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef bool (*CompareFunction) (const void *, const void *);
 #define DefList(Type, Name) \
 typedef struct { \
     Type *Items; \
@@ -11,11 +12,19 @@ typedef struct { \
 } Name; \
 \
 Type Name##_Get(const Name *Arr, size_t Idx) { \
+    BLOKK_ReturnIfFalse(Idx >= Arr->Size, (Type){0}); \
+    \
     return Arr->Items[Idx]; \
 } \
 \
+Type Name##_GetPtr(const Name *Arr, size_t Idx) { \
+    BLOKK_ReturnIfFalse(Idx >= Arr->Size, (Type){0}); \
+    \
+    return &Arr->Items[Idx]; \
+} \
+\
 bool Name##_Add(Name *Arr, Type Item) { \
-    const bool H = Name##_EnsureListCapacity(Arr); \
+    const bool H = Name##_EnsureCapacity(Arr); \
     if(!H) {return false;} \
     \
     Arr->Items[Arr->Size++] = Item; \
@@ -23,22 +32,25 @@ bool Name##_Add(Name *Arr, Type Item) { \
 } \
 \
 void Name##_Remove(Name *Arr, size_t Idx) { \
-    memmove(&Arr->Items[Idx], &Arr->Items[Idx + 1], (Arr->Size - Idx) * sizeof(Type)); \
+    BLOKK_ReturnIfFalse(Idx >= Arr->Size,); \
+    \
+    memmove(&Arr->Items[Idx], &Arr->Items[Idx + 1], (Arr->Size - Idx - 1) * sizeof(Type)); \
     Arr->Size--; \
 } \
 \
 void Name##_RemoveSwap(Name *Arr, size_t Idx) { \
+    BLOKK_ReturnIfFalse(Idx >= Arr->Size,); \
+    \
     Arr->Items[Idx] = Arr->Items[Arr->Size - 1]; \
     Arr->Size--; \
 } \
 bool Name##_Insert(Name *Arr, size_t Idx, Type Item) { \
-    if(Idx < 0 || Idx > Arr->Size) { \
-        return false; \
-    } \
-    const bool L = EnsureListCapacity(Arr); \
+    BLOKK_ReturnIfFalse(Idx >= Arr->Size, false) \
+    \
+    const bool L = EnsureCapacity(Arr); \
     if(!L) {return false;} \
     \
-    memmove(&Arr->Items[Idx + 1], &Arr->Items[Idx], (Arr->Size - Idx - 1) * sizeof(Type)); \
+    memmove(&Arr->Items[Idx + 1], &Arr->Items[Idx], (Arr->Size - Idx) * sizeof(Type)); \
     \
     Arr->Items[Idx] = Item; \
     Arr->Size++; \
@@ -68,6 +80,8 @@ bool Name##_IsEmpty(const Name *Arr) { \
 } \
 \
 void Name##_Set(Name*Arr, size_t Idx, Type Item) { \
+    BLOKK_ReturnIfFalse(Idx >= Arr->Size,); \
+    \
     Arr->Items[Idx] = Item; \
 } \
 \
@@ -76,6 +90,8 @@ void Name##_Clear(Name *Arr) { \
 } \
 \
 bool Name##_Reserve(Name *Arr, size_t Capacity) {   \
+    BLOKK_ReturnIfFalse(Capacity < Arr->Capacity, false); \
+    \
     Type *NewItems = realloc(Arr->Items, Capacity * sizeof(Type)); \
     if(NewItems == NULL) { \
         return false; \
@@ -94,9 +110,19 @@ void Name##_Reverse(Name *Arr) { \
 } \
 \
 bool Name##_BulkAdd(Name *Arr, Type *Items, size_t Length) { \
-    if (!Name##_EnsureCertainCapacity(Arr, Length)) return false; \
+    BLOKK_ReturnIfFalse(!Name##_EnsureCertainCapacity(Arr, Length), false); \
+    \
     memcpy(&Arr->Items[Arr->Size], Items, Length * sizeof(Type)); \
     Arr->Size += Length; \
+    return true; \
+} \
+\
+bool Name##_BulkDelete(Name *Arr, size_t StartIdx, size_t EndIdx) { \
+    size_t Count = EndIdx - StartIdx + 1; \
+    BLOKK_ReturnIfFalse(StartIdx >= Arr->Size || EndIdx >= Arr->Size, false); \
+    \
+    memmove(&Arr->Items[StartIdx], &Arr->Items[EndIdx + 1], (Arr->Size - StartIdx - Count) * sizeof(Type)); \
+    Arr->Size -= EndIdx - StartIdx; \
     return true; \
 } \
 \
@@ -126,6 +152,26 @@ bool Name##_EnsureCertainCapacity(Name *Arr, size_t Length) { \
         return true; \
     } \
     return true; \
+} 
+
+#define DefComplexList(Type, Name) \
+DefList(Type, Name) \
+bool Name##_Contains(const Name *Arr, Type Item, CompareFunction Compare) { \
+    const size_t Count = Arr->Size; \
+    Type *Items = Arr->Items; \
+    for(size_t i = 0; i < Count; i++) { \
+        if(Compare(Arr->Items[i], Item)) {return true;} \
+    } \
+    return false; \
+} \
+\
+size_t Name##_Find(const Name *Arr, Type Item, CompareFunction Compare) { \
+    const size_t Count = Arr->Size; \
+    Type *Items = Arr->Items; \
+    for(size_t i = 0; i < Count; i++) { \
+        if(Compare(Arr->Items[i], Item)) {return i;} \
+    } \
+    return SIZE_MAX; \
 } \
 \
 
@@ -146,7 +192,7 @@ size_t Name##_Find(const Name *Arr, Type Item) { \
     for(size_t i = 0; i < Count; i++) { \
         if(Items[i] == Item) {return i;} \
     } \
-    return -1; \
+    return SIZE_MAX; \
 } \
 \
 }
