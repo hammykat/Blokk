@@ -14,17 +14,19 @@ typedef struct {
 } TypeTable;
 
 // Probably won't use this:P
-enum TokenType {
+typedef enum {
     TokenIdentifier,
     TokenKeyword,
-    TokenNumber,
-    TokenString,
+    TokenType,
+    TokenLiteral,
 
     TokenOperator,
-    TokenSymbol,
+    TokenPunctuation,
+
+    TokenInvalid,
 
     TokenEndOfFile
-};
+} TokenClass;
 
 // Value Types
 typedef enum {
@@ -79,6 +81,11 @@ typedef enum {
     CollectionStack,
     CollectionQueue
 } CollectionType;
+
+typedef struct {
+    CharacterData Start;
+    TokenClass Class;        
+} Token;
 
 //Function declarations
 int CompareTokenToList(const TypeTable *Table, char *Token);

@@ -6,43 +6,40 @@
 #define DefList(Type, Name) \
 typedef struct { \
     Type *Items; \
-    int Size; \
-    int Capacity; \
+    size_t Size; \
+    size_t Capacity; \
 } Name; \
 \
-Type Name##_Get(const Name *Arr, int Idx) { \
+Type Name##_Get(const Name *Arr, size_t Idx) { \
     return Arr->Items[Idx]; \
 } \
 \
 bool Name##_Add(Name *Arr, Type Item) { \
-    const bool H = EnsureListCapacity(Arr); \
+    const bool H = Name##_EnsureListCapacity(Arr); \
     if(!H) {return false;} \
     \
     Arr->Items[Arr->Size++] = Item; \
     return true; \
 } \
 \
-void Name##_Remove(Name *Arr, int Idx) { \
-    for (int i = Idx; i < Arr->Size - 1; i++) { \
-        Arr->Items[i] = Arr->Items[i + 1]; \
-    } \
+void Name##_Remove(Name *Arr, size_t Idx) { \
+    memmove(&Arr->Items[Idx], &Arr->Items[Idx + 1], (Arr->Size - Idx) * sizeof(Type)); \
     Arr->Size--; \
 } \
 \
-void Name##_RemoveSwap(Name *Arr, int Idx) { \
+void Name##_RemoveSwap(Name *Arr, size_t Idx) { \
     Arr->Items[Idx] = Arr->Items[Arr->Size - 1]; \
     Arr->Size--; \
 } \
-bool Name##_Insert(Name *Arr, int Idx, Type Item) { \
+bool Name##_Insert(Name *Arr, size_t Idx, Type Item) { \
     if(Idx < 0 || Idx > Arr->Size) { \
         return false; \
     } \
     const bool L = EnsureListCapacity(Arr); \
     if(!L) {return false;} \
     \
-    for(int i = Arr->Size; i > Idx; i--) { \
-        Arr->Items[i] = Arr->Items[i - 1]; \
-    } \
+    memmove(&Arr->Items[Idx + 1], &Arr->Items[Idx], (Arr->Size - Idx - 1) * sizeof(Type)); \
+    \
     Arr->Items[Idx] = Item; \
     Arr->Size++; \
     return true; \
@@ -50,8 +47,8 @@ bool Name##_Insert(Name *Arr, int Idx, Type Item) { \
 \
 bool Name##_Init(Name *Arr) { \
     Arr->Size = 0; \
-    Arr->Capacity = 5; \
-    Arr->Items = malloc(5 * sizeof(Type)); \
+    Arr->Capacity = 16; \
+    Arr->Items = malloc(Arr->Capacity * sizeof(Type)); \
     if(Arr->Items == NULL) { \
         Arr->Capacity = 0; \
         return false; \
@@ -70,7 +67,7 @@ bool Name##_IsEmpty(const Name *Arr) { \
     return Arr->Size == 0; \
 } \
 \
-void Name##_Set(Name*Arr, int Idx, Type Item) { \
+void Name##_Set(Name*Arr, size_t Idx, Type Item) { \
     Arr->Items[Idx] = Item; \
 } \
 \
@@ -78,7 +75,7 @@ void Name##_Clear(Name *Arr) { \
     Arr->Size = 0; \
 } \
 \
-bool Name##_Reserve(Name *Arr, int Capacity) {   \
+bool Name##_Reserve(Name *Arr, size_t Capacity) {   \
     Type *NewItems = realloc(Arr->Items, Capacity * sizeof(Type)); \
     if(NewItems == NULL) { \
         return false; \
@@ -89,14 +86,14 @@ bool Name##_Reserve(Name *Arr, int Capacity) {   \
 } \
 \
 void Name##_Reverse(Name *Arr) { \
-    for (int i = 0; i < Arr->Size / 2; i++) { \
+    for (size_t i = 0; i < Arr->Size / 2; i++) { \
         Type Temp = Arr->Items[i]; \
         Arr->Items[i] = Arr->Items[Arr->Size - 1 - i]; \
         Arr->Items[Arr->Size - 1 - i] = Temp; \
     } \
 } \
 \
-bool Name##_BulkAdd(Name *Arr, Type *Items, int Length) { \
+bool Name##_BulkAdd(Name *Arr, Type *Items, size_t Length) { \
     if (!Name##_EnsureCertainCapacity(Arr, Length)) return false; \
     memcpy(&Arr->Items[Arr->Size], Items, Length * sizeof(Type)); \
     Arr->Size += Length; \
@@ -105,7 +102,7 @@ bool Name##_BulkAdd(Name *Arr, Type *Items, int Length) { \
 \
 bool Name##_EnsureCapacity(Name *Arr) { \
     if(Arr->Size >= Arr->Capacity) { \
-        int NewCapacity = Arr->Capacity * 2; \
+        size_t NewCapacity = Arr->Capacity * 2; \
         Type *NewItems = realloc(Arr->Items, NewCapacity * sizeof(Type)); \
         if(NewItems == NULL) { \
             return false; \
@@ -117,9 +114,9 @@ bool Name##_EnsureCapacity(Name *Arr) { \
     return true; \
 } \
 \
-bool Name##_EnsureCertainCapacity(Name *Arr, int Length) { \
+bool Name##_EnsureCertainCapacity(Name *Arr, size_t Length) { \
     if(Arr->Capacity - Arr->Size < Length) { \
-        int NewCapacity = Arr->Capacity + Length; \
+        size_t NewCapacity = Arr->Capacity + Length; \
         Type *NewItems = realloc(Arr->Items, NewCapacity * sizeof(Type)); \
         if(NewItems == NULL) { \
             return false; \
@@ -135,18 +132,18 @@ bool Name##_EnsureCertainCapacity(Name *Arr, int Length) { \
 #define DefSimpleList(Type, Name) { \
 DefList(Type, Name)\
 bool Name##_Contains(const Name *Arr, Type Item) { \
-    const int Count = Arr->Size; \
+    const size_t Count = Arr->Size; \
     Type *Items = Arr->Items; \
-    for(int i = 0; i < Count; i++) { \
+    for(size_t i = 0; i < Count; i++) { \
         if(Items[i] == Item) {return true;} \
     } \
     return false; \
 } \
 \
-int Name##_Find(const Name *Arr, Type Item) { \
-    const int Count = Arr->Size; \
+size_t Name##_Find(const Name *Arr, Type Item) { \
+    const size_t Count = Arr->Size; \
     Type *Items = Arr->Items; \
-    for(int i = 0; i < Count; i++) { \
+    for(size_t i = 0; i < Count; i++) { \
         if(Items[i] == Item) {return i;} \
     } \
     return -1; \
