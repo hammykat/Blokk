@@ -86,7 +86,7 @@ Objects* LoadObjects(GameObjectList *WorldObjects) {
     return GameObjects;
 }
 
-void UpdatePositions(Vector2 *PosArray, Vector2 *VelArray, int *ValidIdx, int Count) {
+void UpdatePositions(Vector2 *PosArray, Vector2 *VelArray, int *ValidIdx, int Count, float Delta) {
     for(int i = 0; i < Count; i++) {
 
         // Get helper vars
@@ -95,8 +95,8 @@ void UpdatePositions(Vector2 *PosArray, Vector2 *VelArray, int *ValidIdx, int Co
         Vector2 *Velocity = &VelArray[Idx];
         
         // Update position
-        Position->x += Velocity->x;
-        Position->y += Velocity->y;
+        Position->x += Velocity->x * Delta;
+        Position->y += Velocity->y * Delta;
     }
 }
 

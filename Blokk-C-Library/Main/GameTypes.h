@@ -6,7 +6,6 @@
 #include <stdbool.h>
 #include "Lists.h"
 
-
 typedef enum {
     CollisionRect,
     CollisionCircle
@@ -45,16 +44,11 @@ typedef struct {
     size_t Count;
 } ObjectAnimations;
 
-typedef struct { 
-    Vector2 Position;
-    Vector2 Velocity;
-    Collider Collisions;
-    ObjectAnimations Animations; 
-    bool IsStatic;
-    bool IsVisible;
-    bool IsAnimated;
-    bool IsCollidable;
-} GameObject;
+// Object
+
+typedef struct GameObject GameObject;
+
+// Engine game objects
 
 typedef struct {
     int *Visible;
@@ -80,7 +74,5 @@ typedef struct {
 
     int ObjectCount;
 } Objects;
-
-DefComplexList(GameObject, GameObjectList)
 
 #endif
