@@ -4,6 +4,8 @@
 #include "raylib.h"
 #include <stdlib.h>
 #include <stdbool.h>
+#include "Lists.h"
+
 
 typedef enum {
     CollisionRect,
@@ -73,11 +75,12 @@ typedef struct {
     Vector2 *Velocity;
     Collider *Collisions;
     ObjectAnimations *Animations; 
-    bool *IsStatic;
-    bool *IsVisible;
-    bool *IsAnimated;
-    bool *IsCollidable;
+
+    GameObjectValidIndexes ValidIndexes;
+
     int ObjectCount;
 } Objects;
+
+DefComplexList(GameObject, GameObjectList)
 
 #endif

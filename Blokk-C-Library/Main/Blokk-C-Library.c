@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include "GameTypes.h"
 
-Objects CreateObjectArrays(size_t Count) {
+Objects* CreateObjectArrays(size_t Count) {
 
     Objects WorldObjects;
 
@@ -13,45 +13,77 @@ Objects CreateObjectArrays(size_t Count) {
     size_t VelocitySize = Count * sizeof(Vector2);
     size_t CollisionsSize = Count * sizeof(Collider);
     size_t AnimationsSize = Count * sizeof(ObjectAnimations);
-    size_t BoolValSize = Count * sizeof(bool);
 
-    // Get one huge chunk of memory
-    void *Memory = malloc(PositionSize + VelocitySize + CollisionsSize + AnimationsSize + (BoolValSize * 4));
-    if(Memory == NULL) return (Objects){0};
+    // Allocate space for arrays
+    void *Memory = malloc(PositionSize + VelocitySize + CollisionsSize + AnimationsSize);
+    if(Memory == NULL) return NULL;
 
     // Calculate positions and assign
     WorldObjects.Position = Memory;
     WorldObjects.Velocity = Memory + PositionSize;
-    WorldObjects.Animations = Memory + PositionSize + VelocitySize;
+    WorldObjects.Collisions = Memory + PositionSize + VelocitySize;
+    WorldObjects.Animations = Memory + PositionSize + VelocitySize + CollisionsSize;
 
-    void *TempVar = Memory + PositionSize + VelocitySize + AnimationsSize;
-    WorldObjects.IsStatic = TempVar;
-    WorldObjects.IsVisible = TempVar + BoolValSize;
-    WorldObjects.IsAnimated = TempVar + BoolValSize * 2;
-    WorldObjects.IsCollidable = TempVar + BoolValSize * 3;
+    // Allocate space for valid indexes
+    int Size = Count * sizeof(int);
+    void *IndexMemory = malloc(Size * 4);
+    GameObjectValidIndexes *ValidIdx = &WorldObjects.ValidIndexes;
+
+    // Calculate positions and assign
+    ValidIdx->ValidVisibleCount = IndexMemory;
+    ValidIdx->ValidVelCount = IndexMemory + Size;
+    ValidIdx->ValidCollisionCount = IndexMemory + (Size * 2);
+    ValidIdx->ValidAnimCount = IndexMemory + (Size * 3);
 
     // Return it
-    return WorldObjects;
+    return &WorldObjects;
 }
 
-void GetValidIdx(Objects *WorldObjects, ValidIdx *Output, int Count) {
-    int Count = WorldObjects->ObjectCount;
+// Load the game objects
+Objects* LoadObjects(GameObjectList *WorldObjects) {
+    int Count = WorldObjects->Size;
+    Objects *GameObjects = CreateObjectArrays(Count);
+    GameObjectValidIndexes *ValidIndexes = &GameObjects->ValidIndexes;
 
-    ValidIdx ValidIndexes;
-    void *ValidIndexesMemory = malloc((sizeof(int*) * 3) + (sizeof(size_t) * 3));
-
-    ValidIndexes.Velocity = ValidIndexesMemory;
-    ValidIndexes.ValidVelCount = ValidIndexesMemory + sizeof(int*);
-
-    ValidIndexes.Collisions = ValidIndexesMemory + sizeof(int*) + sizeof(size_t);
-    // TODO: Finish getting memory for these
-
+    GameObject *CurrentObject;
     for(int i = 0; i < Count; i++) {
 
-        if(WorldObjects->IsStatic[i]) {
+        CurrentObject = &WorldObjects->Items[i];
 
+        // Add it to all the lists
+        GameObjects->Position[i] = CurrentObject->Position;
+        GameObjects->Velocity[i] = CurrentObject->Velocity;
+        GameObjects->Collisions[i] = CurrentObject->Collisions;
+        GameObjects->Animations[i] = CurrentObject->Animations;
+
+        // Add it to the right index lists
+
+        // Visible
+        if(!CurrentObject->IsVisible) {
+            ValidIndexes->Visible[ValidIndexes->ValidVisibleCount] = i;
+            ValidIndexes->ValidVisibleCount++;
+        }
+
+        // Position
+        if(!CurrentObject->IsStatic) {
+            ValidIndexes->Velocity[ValidIndexes->ValidVelCount] = i;
+            ValidIndexes->ValidVelCount++;
+        }
+
+        // Collisions
+        if(!CurrentObject->IsCollidable) {
+            ValidIndexes->Visible[ValidIndexes->ValidCollisionCount] = i;
+            ValidIndexes->ValidCollisionCount++;
+        }
+
+        // Animations
+        if(!CurrentObject->IsAnimated) {
+            ValidIndexes->Animations[ValidIndexes->ValidAnimCount] = i;
+            ValidIndexes->ValidAnimCount++;
         }
     }
+
+    return GameObjects;
 }
 
 void UpdatePositions(Vector2 *PosArray, Vector2 *VelArray, int *ValidIdx, int Count) {
@@ -67,4 +99,5 @@ void UpdatePositions(Vector2 *PosArray, Vector2 *VelArray, int *ValidIdx, int Co
         Position->y += Velocity->y;
     }
 }
+
 

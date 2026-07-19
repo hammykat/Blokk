@@ -47,7 +47,7 @@ void Blokk_Assert_IMPL(
 
 #ifdef BLOKK_SAFETY
 #define BLOKK_ReturnIfFalse(expr, returnVal) \
-    if (!(expr)) return returnVal;
+    if (expr) return returnVal;
 #else
 #define BLOKK_ReturnIfFalse(expr, returnVal)
 #endif

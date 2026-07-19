@@ -1,7 +1,10 @@
 #include "raylib.h"
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "Debug/DebugSystem.h"
 
 typedef bool (*CompareFunction) (const void *, const void *);
 #define DefList(Type, Name) \
@@ -11,43 +14,61 @@ typedef struct { \
     size_t Capacity; \
 } Name; \
 \
+Type Name##_Get(const Name *Arr, size_t Idx); \
+Type* Name##_GetPtr(const Name *Arr, size_t Idx); \
+bool Name##_Add(Name *Arr, Type Item); \
+void Name##_Remove(Name *Arr, size_t Idx); \
+void Name##_RemoveSwap(Name *Arr, size_t Idx); \
+bool Name##_Insert(Name *Arr, size_t Idx, Type Item); \
+bool Name##_Init(Name *Arr); \
+void Name##_Destroy(Name *Arr); \
+bool Name##_IsEmpty(const Name *Arr); \
+void Name##_Set(Name*Arr, size_t Idx, Type Item); \
+void Name##_Clear(Name *Arr); \
+bool Name##_Reserve(Name *Arr, size_t Capacity); \
+void Name##_Reverse(Name *Arr); \
+bool Name##_BulkAdd(Name *Arr, Type *Items, size_t Length); \
+bool Name##_BulkDelete(Name *Arr, size_t StartIdx, size_t EndIdx); \
+bool Name##_EnsureCapacity(Name *Arr); \
+bool Name##_EnsureCertainCapacity(Name *Arr, size_t Length); \
+\
 Type Name##_Get(const Name *Arr, size_t Idx) { \
     BLOKK_ReturnIfFalse(Idx >= Arr->Size, (Type){0}); \
     \
     return Arr->Items[Idx]; \
 } \
 \
-Type Name##_GetPtr(const Name *Arr, size_t Idx) { \
-    BLOKK_ReturnIfFalse(Idx >= Arr->Size, (Type){0}); \
+Type* Name##_GetPtr(const Name *Arr, size_t Idx) { \
+    BLOKK_ReturnIfFalse(Idx >= Arr->Size, NULL); \
     \
     return &Arr->Items[Idx]; \
 } \
 \
 bool Name##_Add(Name *Arr, Type Item) { \
     const bool H = Name##_EnsureCapacity(Arr); \
-    if(!H) {return false;} \
+    if(!H) return false; \
     \
     Arr->Items[Arr->Size++] = Item; \
     return true; \
 } \
 \
 void Name##_Remove(Name *Arr, size_t Idx) { \
-    BLOKK_ReturnIfFalse(Idx >= Arr->Size,); \
+    BLOKK_ReturnIfFalse(Idx >= Arr->Size, ); \
     \
     memmove(&Arr->Items[Idx], &Arr->Items[Idx + 1], (Arr->Size - Idx - 1) * sizeof(Type)); \
     Arr->Size--; \
 } \
 \
 void Name##_RemoveSwap(Name *Arr, size_t Idx) { \
-    BLOKK_ReturnIfFalse(Idx >= Arr->Size,); \
+    BLOKK_ReturnIfFalse(Idx >= Arr->Size, ); \
     \
     Arr->Items[Idx] = Arr->Items[Arr->Size - 1]; \
     Arr->Size--; \
 } \
 bool Name##_Insert(Name *Arr, size_t Idx, Type Item) { \
-    BLOKK_ReturnIfFalse(Idx >= Arr->Size, false) \
+    BLOKK_ReturnIfFalse(Idx >= Arr->Size, false); \
     \
-    const bool L = EnsureCapacity(Arr); \
+    const bool L = Name##_EnsureCapacity(Arr); \
     if(!L) {return false;} \
     \
     memmove(&Arr->Items[Idx + 1], &Arr->Items[Idx], (Arr->Size - Idx) * sizeof(Type)); \
@@ -80,7 +101,7 @@ bool Name##_IsEmpty(const Name *Arr) { \
 } \
 \
 void Name##_Set(Name*Arr, size_t Idx, Type Item) { \
-    BLOKK_ReturnIfFalse(Idx >= Arr->Size,); \
+    BLOKK_ReturnIfFalse(Idx >= Arr->Size, ); \
     \
     Arr->Items[Idx] = Item; \
 } \
@@ -122,7 +143,7 @@ bool Name##_BulkDelete(Name *Arr, size_t StartIdx, size_t EndIdx) { \
     BLOKK_ReturnIfFalse(StartIdx >= Arr->Size || EndIdx >= Arr->Size, false); \
     \
     memmove(&Arr->Items[StartIdx], &Arr->Items[EndIdx + 1], (Arr->Size - StartIdx - Count) * sizeof(Type)); \
-    Arr->Size -= EndIdx - StartIdx; \
+    Arr->Size -= Count; \
     return true; \
 } \
 \
@@ -156,11 +177,14 @@ bool Name##_EnsureCertainCapacity(Name *Arr, size_t Length) { \
 
 #define DefComplexList(Type, Name) \
 DefList(Type, Name) \
+bool Name##_Contains(const Name *Arr, Type Item, CompareFunction Compare); \
+size_t Name##_Find(const Name *Arr, Type Item, CompareFunction Compare); \
+\
 bool Name##_Contains(const Name *Arr, Type Item, CompareFunction Compare) { \
     const size_t Count = Arr->Size; \
     Type *Items = Arr->Items; \
     for(size_t i = 0; i < Count; i++) { \
-        if(Compare(Arr->Items[i], Item)) {return true;} \
+        if(Compare(&Arr->Items[i], &Item)) {return true;} \
     } \
     return false; \
 } \
@@ -169,14 +193,15 @@ size_t Name##_Find(const Name *Arr, Type Item, CompareFunction Compare) { \
     const size_t Count = Arr->Size; \
     Type *Items = Arr->Items; \
     for(size_t i = 0; i < Count; i++) { \
-        if(Compare(Arr->Items[i], Item)) {return i;} \
+        if(Compare(&Arr->Items[i], &Item)) {return i;} \
     } \
     return SIZE_MAX; \
-} \
-\
+}
 
-#define DefSimpleList(Type, Name) { \
+#define DefSimpleList(Type, Name) \
 DefList(Type, Name)\
+bool Name##_Contains(const Name *Arr, Type Item); \
+size_t Name##_Find(const Name *Arr, Type Item); \
 bool Name##_Contains(const Name *Arr, Type Item) { \
     const size_t Count = Arr->Size; \
     Type *Items = Arr->Items; \
@@ -193,6 +218,4 @@ size_t Name##_Find(const Name *Arr, Type Item) { \
         if(Items[i] == Item) {return i;} \
     } \
     return SIZE_MAX; \
-} \
-\
 }
