@@ -11,17 +11,6 @@ typedef enum {
 } CollisionBoxType;
 
 typedef struct {
-    int *Velocity;
-    size_t ValidVelCount;
-
-    int *Collisions;
-    size_t ValidCollisionCount;
-
-    int *Animations;
-    size_t ValidAnimCount;
-} ValidIdx;
-
-typedef struct {
     char *Characters;
     size_t Length;
 } String;
@@ -64,6 +53,20 @@ typedef struct {
     bool IsAnimated;
     bool IsCollidable;
 } GameObject;
+
+typedef struct {
+    int *Visible;
+    size_t ValidVisibleCount;
+
+    int *Velocity;
+    size_t ValidVelCount;
+
+    int *Collisions;
+    size_t ValidCollisionCount;
+
+    int *Animations;
+    size_t ValidAnimCount;
+} GameObjectValidIndexes;
 
 typedef struct { 
     Vector2 *Position;
