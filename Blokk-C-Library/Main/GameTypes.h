@@ -55,6 +55,17 @@ typedef struct {
 } ObjectAnimations;
 
 typedef struct { 
+    Vector2 Position;
+    Vector2 Velocity;
+    Collider Collisions;
+    ObjectAnimations Animations; 
+    bool IsStatic;
+    bool IsVisible;
+    bool IsAnimated;
+    bool IsCollidable;
+} GameObject;
+
+typedef struct { 
     Vector2 *Position;
     Vector2 *Velocity;
     Collider *Collisions;
