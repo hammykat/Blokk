@@ -8,7 +8,10 @@ It will include many featuers that make game development easy, and it will conta
 - Beginner friendly
 - Powerful without unnecessary complexity
 
-As a contributor, go to the discord server for instructions:
+I'm looking for people to collab with to create this and if you're intereseted, 
+go to the discord server for instructions:
 https://discord.gg/TGZtRKz49
+
+Currently this is developed in chunks here and there, and I'm working on a documentation for the library.
 
 This project is protected under the zlib liscence
