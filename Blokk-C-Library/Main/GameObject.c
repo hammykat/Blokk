@@ -5,9 +5,12 @@
 #include "GameTypes.h"
 #include "GameObject.h"
 
-// Set velocity
+// Velocity
 void SetVelocity(GameObject* Object, Vector2 Velocity) {
     Object->Velocity = Velocity;
+}
+Vector2 GetVelocity(GameObject* Object) {
+    return Object->Velocity;
 }
 
 // Visibility
@@ -35,3 +38,15 @@ void SetPosition(GameObject *Object, Vector2 Position) {
 Vector2 GetPosition(GameObject *Object) {
     return Object->Position;
 }
+void ChangePosition(GameObject *Object, Vector2 Change) {
+    Object->Position.x += Change.x;
+    Object->Position.y += Change.y;
+}
+void ChangeXPosition(GameObject *Object, float X) {
+    Object->Position.x += X;
+}
+void ChangeYPosition(GameObject *Object, float Y) {
+    Object->Position.y += Y;
+}
+
+void SmoothMoveTo()
