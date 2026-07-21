@@ -105,7 +105,7 @@ typedef bool (*CompareFunction)(const void *, const void *);
         \
         /* Shift the items after one to the left */                            \
         size_t Size = (Arr->Size - Idx - 1) * sizeof(Type); /* Helper var */   \
-        memmove(&Arr->Items[Idx], &Arr->Items[Idx + 1], );                     \
+        memmove(&Arr->Items[Idx], &Arr->Items[Idx + 1], Size);                     \
         \
         /* Decrement size */                                                   \
         Arr->Size--;                                                           \
@@ -183,7 +183,7 @@ typedef bool (*CompareFunction)(const void *, const void *);
     \
     \
     /* Check if the list is empty - O(1) */                                    \
-    bool Name##_IsEmpty(const Name *Arr) return Arr->Size == 0;                \
+    bool Name##_IsEmpty(const Name *Arr) { return Arr->Size == 0; }            \
     \
     \
     /* Set (replace) an item in the list - O(1) */                             \
@@ -198,7 +198,7 @@ typedef bool (*CompareFunction)(const void *, const void *);
     \
     \
     /* Clear all the items of the array - O(1) */                              \
-    void Name##_Clear(Name *Arr) Arr->Size = 0;                                \
+    void Name##_Clear(Name *Arr) { Arr->Size = 0 };                                \
     \
     \
     /* Reserve space for the list - O(n) */                                    \
@@ -334,7 +334,7 @@ typedef bool (*CompareFunction)(const void *, const void *);
         for (size_t i = 0; i < Count; i++)                                     \
         {                                                                      \
             /* Compare each item to the target item */                         \
-            if (Compare(&Arr->Items[i], &Item)) return true;                   \
+            if (Compare(&Items[i], &Item)) return true;                   \
         }                                                                      \
         \
         /* Return false if it wasn't found */                                  \
@@ -353,7 +353,7 @@ typedef bool (*CompareFunction)(const void *, const void *);
         for (size_t i = 0; i < Count; i++)                                     \
         {                                                                      \
             /* Compare each item to the target item */                         \
-            if (Compare(&Arr->Items[i], &Item)) return i;                      \
+            if (Compare(&Items[i], &Item)) return i;                      \
         }                                                                      \
         \
         /* Return SIZE_MAX if it doesn't exist */                              \
