@@ -1,5 +1,5 @@
-#include "Debug/DebugSystem.h"
-#include "raylib.h"
+#include "../Debug/DebugSystem.h"
+#include "../../include/raylib.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -198,7 +198,7 @@ typedef bool (*CompareFunction)(const void *, const void *);
     \
     \
     /* Clear all the items of the array - O(1) */                              \
-    void Name##_Clear(Name *Arr) { Arr->Size = 0 };                                \
+    void Name##_Clear(Name *Arr) { Arr->Size = 0; }                            \
     \
     \
     /* Reserve space for the list - O(n) */                                    \
@@ -353,14 +353,14 @@ typedef bool (*CompareFunction)(const void *, const void *);
         for (size_t i = 0; i < Count; i++)                                     \
         {                                                                      \
             /* Compare each item to the target item */                         \
-            if (Compare(&Items[i], &Item)) return i;                      \
+            if (Compare(&Items[i], &Item)) return i;                           \
         }                                                                      \
         \
         /* Return SIZE_MAX if it doesn't exist */                              \
         return SIZE_MAX;                                                       \
     }
 
-// Simple lists can't stoer structs and can only store direct types
+// Simple lists can't store structs and can only store direct types
 #define DefSimpleList(Type, Name)                                              \
     \
     \
