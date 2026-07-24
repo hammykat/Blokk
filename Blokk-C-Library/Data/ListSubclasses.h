@@ -101,11 +101,11 @@
 
 /* An optimized simple int list only stores integers and is extremely fast
 by using effecient algorithms */ 
-#define DefSimpleList(Type, Name)                                              \
+#define DefOptimizedIntList(Name)                                              \
     \
     \
     /* Define the basic list */                                                \
-    DefList(Type, Name)                                                        \
+    DefList(int, Name)                                                        \
     \
     typedef struct { \
         size_t Start; \
