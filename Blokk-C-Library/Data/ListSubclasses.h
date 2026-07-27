@@ -176,7 +176,8 @@ by using effecient algorithms */
         /* Loop through the list, implement binary search */                   \
         while (CurrentRange.Start < CurrentRange.End)                          \
         {                                                                      \
-            CurrentRange.Mid = CurrentRange.Start + (CurrentRange.End - CurrentRange.Start) / 2;                           \
+            CurrentRange.Mid = CurrentRange.Start +                            \
+                (CurrentRange.End - CurrentRange.Start) / 2;                   \
             size_t MidVal = Arr->Items[CurrentRange.Mid];                      \
             \
             /* Conditions */                                                   \
@@ -198,4 +199,21 @@ by using effecient algorithms */
         \
         /* Return false if it wasn't found */                                  \
         return false;                                                          \
+    } \
+    \
+    void Name##_ExchangeSort(Name *Arr) { \
+        int TempVal; \
+        int *Items = &Arr->Items; \
+        size_t Size = Arr->Size; \
+        for(int i = 0; i < Size - i - 1; i++) { \
+            for(int u = 0; u < Size; u++) { \
+                \
+                if(Items[i] < Items[u]) { \
+                    TempVal = Items[i]; \
+                    Items[i] = Items[u]; \
+                    Items[u] = TempVal; \
+                } \
+            } \
+        } \
     }
+
