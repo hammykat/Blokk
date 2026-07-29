@@ -11,13 +11,6 @@ typedef struct { \
     int Capacity; \
 } Name; \
 \
-Type Name##_Get(Name *Stack, int Idx) { \
-    const int TargetIdx = Stack->Start + Idx; \
-    BLOKK_ReturnIfFalse(TargetIdx > Stack->End, (Type){0}); \
-    \
-    return Stack->Items[TargetIdx]; \
-} \
-\
 bool Name##_Enqueue(Name *Stack, Type Item) { \
     if(Stack->End + 1 >= Stack->Capacity) { \
         Stack->Capacity *= 2; \
