@@ -1,4 +1,3 @@
-#include "ListBase.cpp"
 
 template<typename Type>
 class SimpleList 
