@@ -18,7 +18,7 @@ private:
     bool Reserve(size_t TargetCapacity)
     {
         // Safety check
-        BLOKK_ReturnIfFalse(TargetCapacity < Capacity, false);
+        BLOKK_ReturnIfFalse(TargetCapacity <= Capacity, true);
 
         // Reallocate the list
         Type *NewItems = (Type*)realloc(Items, TargetCapacity * sizeof(Type));
@@ -92,6 +92,8 @@ public:
         free(Items);
     }
 
+
+
     // Get a pointer to an item at an index
     Type* GetPtr(size_t Idx) 
     {
@@ -102,6 +104,7 @@ public:
     }
 
 
+
     // Get an item at an index
     Type Get(size_t Idx)
     {
@@ -110,6 +113,7 @@ public:
 
         return Items[Idx];
     }
+
 
 
     // Add an item to the back of the list
@@ -172,8 +176,8 @@ public:
         Type* TargetItemPtr = GetPtr(Idx);
 
         // Shift the array right by one
-        size_t Size = (Size - Idx) * sizeof(Type);
-        memmove(GetPtr(Idx + 1), TargetItemPtr, Size);
+        size_t Count = (Size - Idx) * sizeof(Type);
+        memmove(&Items[Idx + 1], TargetItemPtr, Count);
 
         // Replace the target Idx with the item
         Items[Idx] = Item;
@@ -225,6 +229,9 @@ public:
     // Swap 2 indexes in a list
     void Swap(size_t FirstIdx, size_t SecondIdx)
     {
+        // Safety check
+        BLOKK_ReturnIfFalse(FirstIdx >= Size || SecondIdx >= Size, );
+
         Type TempVar = Items[FirstIdx];
 
         // Copy the second item to the first
@@ -278,8 +285,9 @@ public:
     // Delete a bunch of items
     bool BulkDelete(size_t StartIdx, size_t Length)
     {
-        // Safety check
+        // Safety checks
         BLOKK_ReturnIfFalse(StartIdx >= Size, false);
+        BLOKK_ReturnIfFalse(StartIdx + Length > Size, false);
 
         // Shift the items after into their place
         size_t Count = (Size - StartIdx - Length) * sizeof(Type); // Helper
