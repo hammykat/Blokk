@@ -298,4 +298,12 @@ public:
 
         return true;
     }
+
+
+
+    // Get the size of the array
+    size_t GetSize()
+    {
+        return Size;
+    }
 };
