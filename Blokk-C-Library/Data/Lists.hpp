@@ -1,3 +1,8 @@
+#include <cstddef>
+#include <vector>
+#include <type_traits>
+#include <cstdlib>
+#include <cstring>
 
 template<typename Type>
 class SimpleList 
@@ -305,5 +310,203 @@ public:
     size_t GetSize()
     {
         return Size;
+    }
+};
+
+// UNFINISHED
+class OptimizedIntList : public SimpleList<int>
+{
+    
+    public:
+
+    bool Sorted;
+
+    class Range
+    {
+        public:
+        size_t Start;
+        size_t End;
+
+        size_t GetSize() const
+        {
+            return End - Start + 1;
+        }
+    };
+
+    bool MergeSort()
+    {
+        // Make the ranges list, set every thing to the ranges
+        std::vector<Range> CurrentRanges;
+        for(int i = 0; i < Size; i++)
+        {
+            CurrentRanges.push_back(
+                (Range){
+                    i,
+                    i
+                }
+            );
+        }
+
+        std::vector<Range> NextRanges;
+
+        // Init vars
+        int Right;
+        int Left;
+        int RightNum;
+        int LeftNum;
+        int RightItem;
+        int LeftItem;
+        Range RightRange;
+        Range LeftRange;
+
+        // Get memory for the result
+        int *NewItems = (int*)malloc(Size * sizeof(int));
+        if(NewItems == nullptr) return false;
+
+        size_t SortedItems = 0;
+        while(CurrentRanges.size() != 1)
+        {
+
+            // Loop through all the ranges
+            for(int i = CurrentRanges.size() - 1; i > -1; i -= 2)
+            {
+                if(i == 0) break;
+
+                // Get the right and left
+                RightRange = CurrentRanges[i];
+                LeftRange = CurrentRanges[i - 1];
+                Right = RightRange.Start;
+                Left = LeftRange.Start;
+                RightNum = 0;
+                LeftNum = 0;
+                RightItem = Items[Right];
+                LeftItem = Items[Left];
+
+                // Loop through the values of the range
+                size_t RangeSize = RightRange.GetSize() + LeftRange.GetSize();
+                for(int u = 0; u < RangeSize; u++)
+                {
+                    // Update vars
+                    Right = RightRange.Start + RightNum;
+                    Left = LeftRange.Start + LeftNum;
+                    RightItem = Items[Right];
+                    LeftItem = Items[Left];
+                    
+                    if(RightItem < LeftItem)
+                    {
+                        NewItems[SortedItems] = LeftItem;
+                        SortedItems++;
+                        LeftNum++;
+
+                        // If the left side is finished
+                        if(LeftNum >= LeftRange.GetSize())
+                        {
+                            // Helper
+                            size_t Count = RightRange.GetSize() - RightNum;
+
+                            // Copy the rest of the right side
+                            std::memcpy(
+                                &NewItems[SortedItems], 
+                                &Items[RightRange.Start + RightNum], 
+                                Count * sizeof(int)
+                            );
+
+                            // Update sortedItems
+                            SortedItems += Count;
+
+                            // Stop
+                            break;
+                        }
+                    } 
+                    else if(RightItem > LeftItem)
+                    {
+                        NewItems[SortedItems] = RightItem;
+                        SortedItems++;
+                        RightNum++;
+
+                        if(RightNum >= RightRange.GetSize())
+                        {
+                            // Helper
+                            size_t Count = LeftRange.GetSize() - LeftNum;
+
+                            // Copy the rest of the left side
+                            std::memcpy(
+                                &NewItems[SortedItems], 
+                                &Items[LeftRange.Start + LeftNum], 
+                                Count * sizeof(int)
+                            );
+
+                            // Update sortedItems
+                            SortedItems += Count;
+                        }
+                    } 
+                    else 
+                    {
+                        NewItems[SortedItems++] = RightItem;
+                        NewItems[SortedItems++] = LeftItem;
+                        RightNum++;
+                        LeftNum++;
+                        
+                        // Conditions
+                        if(RightNum >= RightRange.GetSize() && LeftNum < LeftRange.GetSize())
+                        {
+                            // Helper
+                            size_t Count = LeftRange.GetSize() - LeftNum;
+
+                            // Copy the rest of the left side
+                            std::memcpy(
+                                &NewItems[SortedItems], 
+                                &Items[LeftRange.Start + LeftNum], 
+                                Count * sizeof(int)
+                            );
+
+                            // Update sortedItems
+                            SortedItems += Count;
+                        }
+                        else if(RightNum < RightRange.GetSize() && LeftNum >= LeftRange.GetSize())
+                        {
+                            // Helper
+                            size_t Count = RightRange.GetSize() - RightNum;
+
+                            // Copy the rest of the right side
+                            std::memcpy(
+                                &NewItems[SortedItems], 
+                                &Items[RightRange.Start + RightNum], 
+                                Count * sizeof(int)
+                            );
+
+                            // Update sortedItems
+                            SortedItems += Count;
+
+                            // Stop
+                            break;
+                        } 
+                        else if(RightNum == RightRange.GetSize() && LeftNum == LeftRange.GetSize())
+                        {
+                            break;
+                        } else {
+                            continue;
+                        }
+                    }
+                }
+                
+            }
+        }
+
+        free(Items);
+        Items = NewItems;
+        
+        return true;
+    }
+
+    void MergeRange()
+    {
+
+    }
+
+    void AddRangeMerged(std::vector<Range> *RangeVector, Range Range1, Range Range2)
+    {
+        Range NewRange = {Range1.Start, Range2.End};
+        RangeVector->push_back(NewRange);
     }
 };
