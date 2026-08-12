@@ -56,17 +56,32 @@ Register Name | Register Width | # Of Objects at once
 
 ### Data Layout
 
-  The user creates a new object, and the engine stores all
-the object's fields in an SoA (Structure of Array) form. This 
-offers cache locality and makes SIMD faster and easier. 
+  The engine stores all object data in cache-friendly vectors.
+But the user is exposed a class instance for each object. When
+the user creates a new object, and the engine stores all
+the object's fields in an SoA (Structure of Array) form. For
+example:
 
-  The engine stores the objects that are static and dynamic
-together, which makes the operations super fast with SIMD. The
-engine stores the velocities and positions of the static and 
-dynamic objects together, the animations of the objects together 
-according to their visibility, and the collisions together.
+| x | x | x | x | x
+| y | y | y | y | y
+
+Instead of:
+
+| x, y | x, y | x, y | x, y 
+
+  This design also helps with the SIMD. The engine stores the
+data of dynamic (objects that move) and static (objects that
+don't move) separately for the velocity, positions, and collisions,
+making sure to keep the lists synced. For animations and rendering,
+it stores the visible and invisible objects separately, making sure
+those also stay in sync. There is also a vector storing pointers
+to all the object instances, so that when the engine needs to 
+rearrange the vectors or perform tasks, the object's internal
+variables stay in sync.
 
   The engine won't store the velocities of static objects,
 because they are all {0, 0}. It only stores the velocities of
-dynamic objects.
+dynamic objects. With animations, it stores the frame numbers,
+the names, the current animations, and the frames separately
+for speed and cache-locality.
 
