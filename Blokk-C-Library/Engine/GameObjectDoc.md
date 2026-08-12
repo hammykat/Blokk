@@ -1,0 +1,1 @@
+The game object is the backbone of Blokk. It is used as a single game object, and has many built-in functions. You can decide to handle the object every frame yourself or let the engine do all the systems for you.
