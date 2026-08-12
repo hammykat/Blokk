@@ -5,7 +5,7 @@ It uses systems, which are currently:
 - Sounds
 - Visibility / Rendering
 
-#Parallelism#
+#Parallelism
 
   The engine will open threads according to the workload.
 For example, at the start of the program, it'll only open 1,
@@ -22,7 +22,7 @@ the engine sees that no objects were added and no fields were
 updated in the last frame, it'll reuse the same queues from the 
 previous frame.
 
-#SIMD#
+#SIMD
 
   The engine will use SIMD to carry out multiple operations
 at one time. It matters on how big the user's computer's SIMD 
@@ -31,7 +31,7 @@ then the engine will carry out the operations on 4 objects on a
 time. The same happens with 256 and 512 bit registers (8 and 16 
 floats).
 
-#Data Layout#
+#Data Layout
 
   The user creates a new object, and the engine stores all
 the object's fields in an SoA (Structure of Array) form. This 
