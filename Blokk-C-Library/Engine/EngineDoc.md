@@ -9,7 +9,7 @@ It uses systems, which are currently:
 
 ### Parallelism
 
-    The engine will open threads according to the workload.
+The engine will open threads according to the workload.
 The engine decides this by timing how long it takes to execute
 all the systems. It'll first get the frame time and then get 
 the optimal time (Around 80% of the frame time). Then, it'll time
