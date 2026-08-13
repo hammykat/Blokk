@@ -27,8 +27,8 @@ struct DoubleFieldUpdate {
     CommandTypes Type;
     std::vector<float> *XVector;
     std::vector<float> *YVector;
-    float Value1;
-    float Value2;
+    float XValue;
+    float YValue;
     size_t Idx;
 };
 
