@@ -19,9 +19,6 @@ class GameObject;
 
 using namespace std;
 
-using WorkerJobFunction =
-    void (ObjectManager::* )(IndexRange);
-
 struct IndexRange {
     size_t Start, End;
 
@@ -30,6 +27,10 @@ struct IndexRange {
         return End - Start;
     }
 };
+
+using WorkerJobFunction =
+    void (ObjectManager::* )(IndexRange);
+
 
 // Thread
 class Worker
@@ -217,6 +218,9 @@ public:
     {
         // Open starting thread
         OpenThread();
+        
+        // Set the worker's manager
+        Worker::Manager = this;
     }
 
 private:
@@ -248,23 +252,25 @@ private:
     vector<CollisionHit> StaticCollisions;
     
     // Animations
-    vector<size_t> VisibleFrameNums;
-    vector<size_t> InVisibleFrameNums;
-    vector<size_t> VisibleCurrentAnimNums;
-    vector<size_t> InVisibleCurrentAimNums;
+    vector<uint32_t> VisibleFrameNums;
+    vector<uint32_t> InvisibleFrameNums;
+    vector<uint32_t> VisibleCurrentAnimNums;
+    vector<uint32_t> InVisibleCurrentAimNums;
     // Stores the animation names, points to an index in the animations
-    unordered_map<string, size_t> AnimNames;
+    unordered_map<string, uint32_t> AnimNames;
     // Stores a list of animations
     vector<vector<Texture2D>> Frames;
+    vector<vector<uint32_t>> FrameWidths;
+    vector<vector<uint32_t>> FrameHeights;
 
     // Pointers to object instances
     vector<GameObject*> ObjectInstances;
 
     // Index tracking 
-    vector<size_t> ValidVisibleIdxs;
-    vector<size_t> ValidVelIdxs;
-    vector<size_t> ValidAnimIdxs;
-    vector<size_t> ValidCollIdxs;
+    vector<uint32_t> ValidVisibleIdxs;
+    vector<uint32_t> ValidVelIdxs;
+    vector<uint32_t> ValidAnimIdxs;
+    vector<uint32_t> ValidCollIdxs;
 
     // Update commands
     queue<FieldUpdate> FieldUpdateCommands;
@@ -272,23 +278,23 @@ private:
     queue<ObjectCreationParams> Creations;
 
     queue<DynamicRegisterInfo> IntoDynamic;
-    queue<size_t> IntoStatic;
+    queue<uint32_t> IntoStatic;
 
-    queue<size_t> IntoVisible;
-    queue<size_t> FromVisible;
+    queue<uint32_t> IntoVisible;
+    queue<uint32_t> FromVisible;
 
     // Rendering
     std::vector<RenderTypes> RenderTypes;
-    std::vector<size_t> RenderObjects;
+    std::vector<uint32_t> RenderObjects;
 
     // Ranges
     queue<Range> VelRanges;
     queue<Range> CollisionRanges;
 
     // Workers
-    size_t ThreadCount;
-    size_t OpenedThreads;
-    size_t PrevOpenedThreads;
+    uint32_t ThreadCount;
+    uint32_t OpenedThreads;
+    uint32_t PrevOpenedThreads;
 
     bool ThreadOpenedPrevFrame;
     bool ThreadDestroyedPrevFrame;
@@ -354,7 +360,7 @@ private:
         { // Velocities 
 
             // Get ranges
-            vector<IndexRange> VelRanges = GetRanges(ObjectCount, OpenedThreads);
+            vector<IndexRange> VelRanges = GetRanges(XVelocities.size(), OpenedThreads);
             // Set function
             Worker::CurrentJob = UpdateRangeOfPositions;
             // Loop through
@@ -367,10 +373,22 @@ private:
             for (auto& Worker : Workers) {
                 Worker->WaitUntilFinished();
             }
+        } 
+
+        { // Animations
+
+            { // Incrementing
+                
+                // Let the main thread increment
+                IncrementFrames(VisibleFrameNums);
+                IncrementFrames(InvisibleFrameNums);
+            }
+
+            { // Visibility checks
+
+
+            }
         }
-
-        // Animations -----------------
-
 
 
         // Get the end time
@@ -563,6 +581,21 @@ private:
         
     }
 
+    // Visibility checks --------------------------------------
+
+    void CheckVisible(
+        vector<float>& XPositions,
+        vector<float>& YPositions,
+        uint32_t Size
+    )
+    {
+
+    }
+
+    // SIMD helpers --------------------
+
+
+
     // Updates ----------------------------------------------------------------
 
     void ProcessFieldUpdateCommand(FieldUpdate Command)
@@ -595,37 +628,53 @@ private:
         }
     }
 
+    // TODO: Finish
     void ProcessAddCommands()
     {
 
     }
 
-    void ProcessDoubleUpdateCommands()
+    // TODO: Finish
+    void ProcessDoubleUpdateCommands(DoubleFieldUpdate Command)
     {
+        switch(Command.Type) 
+        {
+            case CommandTypes::Set:
+                (*Command.XVector)[Command.Idx] = Command.XValue;
+                (*Command.YVector)[Command.Idx] = Command.YValue;
+                break;
 
+            case CommandTypes::Subtract:
+                (*Command.XVector)[Command.Idx] -= Command.XValue;
+                (*Command.YVector)[Command.Idx] -= Command.YValue;
+                break;
+
+            case CommandTypes::Add:
+                (*Command.XVector)[Command.Idx] += Command.XValue;
+                (*Command.YVector)[Command.Idx] += Command.YValue;
+                break;
+
+            case CommandTypes::Multiply:
+                (*Command.XVector)[Command.Idx] *= Command.XValue;
+                (*Command.YVector)[Command.Idx] *= Command.YValue;
+                break;
+
+            case CommandTypes::Divide:
+                (*Command.XVector)[Command.Idx] /= Command.XValue;
+                (*Command.YVector)[Command.Idx] /= Command.YValue;
+                break;
+                
+            default:
+                break;
+        }
     }
 
     // Animations ----------------------------------------------------------
 
-    void IncrementRangeOfFrameNums(
-        IndexRange Range, 
-        vector<uint32_t>* FrameNums, 
-        vector<int>* XPos, vector<int>* YPos
-    ) {
-        size_t Start = Range.Start;
-        IncrementFrames(
-            FrameNums[Start],
-            &XPos[Start],
-            &YPos[Start],
-            Range.End - Start + 1
-        );
-    }
-
     void IncrementFrames(
-        vector<uint32_t>& FrameNums,
-        vector<int> *XPos, vector<int> *YPos,
-        size_t Size
+        vector<uint32_t>& FrameNums
     ) {
+        size_t Size = FrameNums.size();
         switch(SIMDRegisterLevel)
         {
             // 256 bit
@@ -657,7 +706,7 @@ private:
     
         // Loop
         size_t i = 0;
-        for(; i + 16 <= Size; i += 16)
+        for(; i + 8 <= Size; i += 8)
         {
             // Frame nums
             __m256i FrameData = _mm256_loadu_si256(
