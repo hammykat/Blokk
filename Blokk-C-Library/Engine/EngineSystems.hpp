@@ -20,9 +20,11 @@ class GameObject;
 using namespace std;
 
 using WorkerJobFunction =
-    void (ObjectManager::* )(Range);
+    void (ObjectManager::* )(IndexRange);
 
-
+struct IndexRange {
+    size_t Start, End;
+};
 
 // Thread
 class Worker
@@ -48,7 +50,7 @@ public:
             if (!Running)
                 break;
 
-            Range RangeToProcess = TargetRange;
+            IndexRange RangeToProcess = TargetRange;
             HasWork = false;
 
             Lock.unlock();
@@ -117,7 +119,7 @@ public:
 
 private:
 
-    Range TargetRange;
+    IndexRange TargetRange;
 
     thread Thread;
     bool HasWork = false;
@@ -142,10 +144,6 @@ public:
 
 public:
     SIMDLevel CoreCount;
-    
-    struct IndexRange {
-        size_t Start, End;
-    };
 
     void EngineProcess() 
     {
