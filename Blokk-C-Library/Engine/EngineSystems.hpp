@@ -24,6 +24,11 @@ using WorkerJobFunction =
 
 struct IndexRange {
     size_t Start, End;
+
+    int GetSize()
+    {
+        return End - Start;
+    }
 };
 
 // Thread
@@ -198,6 +203,8 @@ public:
         ThreadDestroyedPrevFrame(false),
         OptimalThreadCountReached(false),
         ThreadCount(std::thread::hardware_concurrency()),
+        OpenedThreads(0),
+        PrevOpenedThreads(0),
 
         // Frames
         FrameTime(1000.0 / FPS),
@@ -323,12 +330,16 @@ private:
     {
         Workers.emplace_back(make_unique<Worker>());
         Workers.back()->Awake();
+
+        OpenedThreads++;
     }
 
     void DestroyThread()
     {
         Workers.back()->Stop();
         Workers.pop_back();
+
+        OpenedThreads--;
     }
 
     // TODO: Complete this
@@ -375,7 +386,7 @@ private:
     // POSITIONS W/ VELS -------------------------------------------------------------------
 
     // Update a range of positions
-    void UpdateRangeOfPositions(Range TRange)
+    void UpdateRangeOfPositions(IndexRange TRange)
     {
         float *XPos = &DynamicXPositions[TRange.Start];
         float *YPos = &DynamicYPositions[TRange.Start];
