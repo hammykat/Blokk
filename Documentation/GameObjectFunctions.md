@@ -6,17 +6,6 @@
 | ------------------------------------------------------------- | ----------------------------------------------------------- |
 | `GameObject(GameObjectCreationParams CP = {{0, 0}, {0, 0}});` | Creates a GameObject with the specified creation parameters |
 
-## Helpers
-
-| Function                                                                                                                                                   | Use                                                             |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `void UpdateEngineData(CommandTypes Type, vector<float> *Values, size_t Idx, float OtherVal);`                                                             | Queues an update to a single engine data value                  |
-| `void UpdateEngineData_Double(CommandTypes Type, vector<float> *XVals, vector<float> *YVals, const float XUpdateVal, const float YUpdateVal, size_t Idx);` | Queues an update to two related engine data values              |
-| `void SetToStatic();`                                                                                                                                      | Changes the object from dynamic to static                       |
-| `void SetToDynamic(Vector2 Vel);`                                                                                                                          | Changes the object from static to dynamic and sets its velocity |
-| `void SetToVisible();`                                                                                                                                     | Makes the object visible                                        |
-| `void SetToInvisible();`                                                                                                                                   | Makes the object invisible                                      |
-
 ## Velocity
 
 | Function                                               | Use                                                           |
@@ -78,3 +67,15 @@
 | ------------------------ | -------------------------- |
 | `void SetToVisible();`   | Makes the object visible   |
 | `void SetToInvisible();` | Makes the object invisible |
+
+## Engine internal helpers
+
+| Function                                                                                                                                                   | Use                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `void UpdateEngineData(CommandTypes Type, vector<float> *Values, size_t Idx, float OtherVal);`                                                             | Queues an update to a single engine data value                  |
+| `void UpdateEngineData_Double(CommandTypes Type, vector<float> *XVals, vector<float> *YVals, const float XUpdateVal, const float YUpdateVal, size_t Idx);` | Queues an update to two related engine data values              |
+| `void SetToStatic();`                                                                                                                                      | Changes the object from dynamic to static                       |
+| `void SetToDynamic(Vector2 Vel);`                                                                                                                          | Changes the object from static to dynamic and sets its velocity |
+| `void SetToVisible();`                                                                                                                                     | Makes the object visible                                        |
+| `void SetToInvisible();`                                                                                                                                   | Makes the object invisible                                      |
+
