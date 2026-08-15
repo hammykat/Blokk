@@ -26,6 +26,6 @@ The engine uses many things to be high-performance, like:
 
 The engine is designed for extreme speed, utilizing things like efficient data layout and SIMD to handle hundreds of thousands to millions of objects at stable fps (For more about how the engine works, check the [background engine architecture](Documentation/EngineArchitecture.md)).
 
-I'm looking for contributors! If you're interested, check [here](CONTRIBUTING.md]
+I'm looking for contributors! If you're interested, check [here](CONTRIBUTING.md)
 
 This project is protected under the zlib license
