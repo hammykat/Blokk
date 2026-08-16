@@ -1,0 +1,1 @@
+If you want to contribute, I would recommend you read the [engine architecture documentation](Documentation/EngineArchitecture.md) to familiarize yourself with how the engine is structured. You can contribute in many ways, such as giving ideas or suggestions, or improving something. [TO BE FINISHED] 
