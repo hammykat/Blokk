@@ -1,3 +1,4 @@
+#pragma once
 #include <intrin.h>
 
 enum class SIMDLevel
@@ -8,7 +9,7 @@ enum class SIMDLevel
     AVX512
 };
 
-SIMDLevel DetectSIMD()
+inline SIMDLevel DetectSIMD()
 {
     int cpuInfo[4];
 

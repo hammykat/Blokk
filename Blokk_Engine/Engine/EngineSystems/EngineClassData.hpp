@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstddef>
 #include <queue>
 #include <thread>
@@ -13,7 +15,7 @@
 #include "GameTypes.hpp"
 #include "ObjectUpdateStructs.hpp"
 #include "SIMD_Finder.hpp"
-#include "EngineThreading.hpp"
+#include "Threading.hpp"
 
 class ObjectManager;
 class GameObject;
@@ -102,8 +104,8 @@ private:
     // Animations
     vector<uint32_t> VisibleFrameNums;
     vector<uint32_t> InvisibleFrameNums;
-    vector<uint32_t> VisibleCurrentAnimNums;
-    vector<uint32_t> InVisibleCurrentAimNums;
+    vector<uint32_t> VisibleAnimNums;
+    vector<uint32_t> InVisibleAimNums;
     // Stores the animation names, points to an index in the animations
     unordered_map<string, uint32_t> AnimNames;
     // Stores a list of animations
@@ -253,7 +255,7 @@ private:
 
     void UpdateRangeOfPositions(IndexRange TRange);
 
-    void ObjectManager::UpdatePositions(
+    void UpdatePositions(
         float* PosX, float* PosY, 
         const float* VelX, const float *VelY, 
         size_t Size

@@ -1,7 +1,17 @@
-#include "EngineClassData.hpp"
+#pragma once
+
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
+
+class ObjectManager;
+#include "IndexRange.hpp"
+
+using namespace std;
 
 using WorkerJobFunction =
-    void (ObjectManager::* )(IndexRange);
+    void (ObjectManager::*)(IndexRange);
 
 
 // Thread
@@ -18,7 +28,7 @@ public:
     {
         while (Running)
         {
-            unique_lock<mutex> Lock(Mutex);
+            std::unique_lock<std::mutex> Lock(Mutex);
 
             CV.wait(Lock, [this]()
             {
@@ -38,7 +48,7 @@ public:
 
             // Tell manager we're finished
             {
-                lock_guard<mutex> Lock(Mutex);
+                std::lock_guard<std::mutex> Lock(Mutex);
                 Finished = true;
             }
 

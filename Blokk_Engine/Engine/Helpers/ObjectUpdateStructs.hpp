@@ -1,7 +1,7 @@
+#pragma once
+
 #include <vector>
 #include "raylib.h"
-
-class GameObject;
 
 enum class CommandTypes {
     Destroy,
@@ -38,5 +38,4 @@ struct ObjectCreationParams
 {
     Vector2 Position;
     Vector2 Velocity;
-    GameObject& Object;
 };

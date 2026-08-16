@@ -3,6 +3,25 @@
 #include "ObjectUpdateStructs.hpp"
 #include "SIMD_Finder.hpp"
 
+// Forward declarations for SIMD helper functions
+void ProcessVelocities_SIMD_AVX2(
+    float* PosX, float* PosY, 
+    const float* VelX, const float* VelY, 
+    size_t Size
+);
+
+void ProcessVelocities_SIMD_AVX512(
+    float* PosX, float* PosY, 
+    const float* VelX, const float* VelY, 
+    size_t Size
+);
+
+void ProcessVelocities_SIMD_SSE2(
+    float* PosX, float* PosY, 
+    const float* VelX, const float* VelY, 
+    size_t Size
+);
+
 // Update a range of positions
 void ObjectManager::UpdateRangeOfPositions(IndexRange TRange)
 {
