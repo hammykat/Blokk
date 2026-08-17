@@ -4,7 +4,6 @@ The blokk engine is the part of the engine that handles GameObjects for you ever
 It uses systems, which are currently:
 - Movement with Velocity and Collisions
 - Animations
-- Sounds
 - Visibility / Rendering
 
 ### Parallelism
