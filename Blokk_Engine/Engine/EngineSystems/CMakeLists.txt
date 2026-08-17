@@ -1,0 +1,9 @@
+add_library(Blokk
+    EngineClassData.hpp
+    IncrementFrames.cpp
+    Velocity.cpp
+    Visibility.cpp
+    Threading.hpp
+    UserUpdates.cpp
+    Animations.cpp
+)
