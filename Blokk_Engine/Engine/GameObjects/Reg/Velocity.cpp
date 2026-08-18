@@ -66,7 +66,7 @@ void GameObject::SetVelocityX(float XVel)
             else // If staying dynamic
             {
                 // Set X 
-                UpdateEngineData(
+                UpdateEngineData<float>(
                     CommandTypes::Set,
                     &EngineObjects->XVelocities,
                     EngineIdx, XVel
@@ -85,7 +85,7 @@ void GameObject::SetVelocityX(float XVel)
         else // If dynamic
         {
             // Set X 
-            UpdateEngineData(
+            UpdateEngineData<float>(
                 CommandTypes::Set,
                 &EngineObjects->XVelocities,
                 EngineIdx, XVel
@@ -116,7 +116,7 @@ void GameObject::SetVelocityY(float YVel)
             else // If staying dynamic
             {
                 // Set X 
-                UpdateEngineData(
+                UpdateEngineData<float>(
                     CommandTypes::Set,
                     &EngineObjects->YVelocities,
                     EngineIdx, YVel
@@ -135,7 +135,7 @@ void GameObject::SetVelocityY(float YVel)
         else // If dynamic
         {
             // Set X 
-            UpdateEngineData(
+            UpdateEngineData<float>(
                 CommandTypes::Set,
                 &EngineObjects->YVelocities,
                 EngineIdx, YVel
@@ -235,10 +235,10 @@ void GameObject::ReverseVelocity()
     if(IsStatic) return;
 
     // Reverse X
-    UpdateEngineData(CommandTypes::Multiply, 
+    UpdateEngineData<float>(CommandTypes::Multiply, 
         &EngineObjects->XVelocities, EngineIdx, -1);
     // Reverse Y
-    UpdateEngineData(CommandTypes::Multiply, 
+    UpdateEngineData<float>(CommandTypes::Multiply, 
         &EngineObjects->YVelocities, EngineIdx, -1);
 }
 void GameObject::ReverseVelocityX() 
@@ -246,7 +246,7 @@ void GameObject::ReverseVelocityX()
     // If static do nothing
     if(IsStatic) return;
 
-    UpdateEngineData(CommandTypes::Multiply, 
+    UpdateEngineData<float>(CommandTypes::Multiply, 
         &EngineObjects->XVelocities, EngineIdx, -1);
 }
 void GameObject::ReverseVelocityY() 
@@ -254,7 +254,7 @@ void GameObject::ReverseVelocityY()
     // If static do nothing
     if(IsStatic) return;
 
-    UpdateEngineData(CommandTypes::Multiply, 
+    UpdateEngineData<float>(CommandTypes::Multiply, 
         &EngineObjects->YVelocities, EngineIdx, -1);
 }
 
