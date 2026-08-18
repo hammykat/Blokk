@@ -1,3 +1,5 @@
+#include <utility>
+
 #include "raylib.h"
 #include "GameTypes.hpp"
 #include "GameObject.hpp"
@@ -28,11 +30,10 @@ void ObjectManager::ProcessFieldUpdateCommand(FieldUpdate Command)
 
         case CommandTypes::Divide:
             (*Command.Vector)[Command.Idx] /= Command.Value;
-            
     }
 }
 
-void ObjectManager::ProcessDoubleUpdateCommands(DoubleFieldUpdate Command)
+void ObjectManager::ProcessDoubleUpdateCommand(DoubleFieldUpdate Command)
 {
     switch(Command.Type) 
     {
@@ -66,7 +67,6 @@ void ObjectManager::ProcessDoubleUpdateCommands(DoubleFieldUpdate Command)
     }
 }
 
-// TODO: Finish
 void ObjectManager::ProcessAddCommands(ObjectCreationParams Fields)
 {
     float XVel = Fields.Velocity.x;
@@ -75,18 +75,48 @@ void ObjectManager::ProcessAddCommands(ObjectCreationParams Fields)
     // If creating a static object
     if(XVel == 0 && YVel == 0)
     {
-        // Add position to static
-        StaticXPositions.push_back(Fields.Position.x);
-        StaticYPositions.push_back(Fields.Position.y);
+        Fields.Object->EngineIdx = XPositions.size();
+
+        // Add position
+        XPositions.push_back(Fields.Position.x);
+        YPositions.push_back(Fields.Position.y);
+
+        StaticObjectCount++;
     } 
     else // If creating a dynamic object
     {
-        // TODO: Update Object's interval vars, add velocity
-        
-        // Add position to static
-        DynamicXPositions.push_back(Fields.Position.x);
-        DynamicYPositions.push_back(Fields.Position.y);
+        // Add position
+        XPositions.push_back(Fields.Position.x);
+        YPositions.push_back(Fields.Position.y);
 
+        // Swap position to keep with dynamic object data
+        std::swap(XPositions[DynamicObjectCount], XPositions[ObjectCount - 1]);
+        std::swap(YPositions[DynamicObjectCount], YPositions[ObjectCount - 1]);
 
+        // Set it's idx
+        Fields.Object->EngineIdx = DynamicObjectCount;
+
+        // Add velocity
+        XVelocities.push_back(XVel);
+        YVelocities.push_back(YVel);
+
+        DynamicObjectCount++;
     }
+
+    ObjectCount++;
 }
+
+void ObjectManager::SwapObjects(uint32_t Obj1, uint32_t Obj2)
+{
+    // Swap X and Y
+    std::swap(XPositions[Obj1], XPositions[Obj2]);
+    std::swap(YPositions[Obj1], YPositions[Obj2]);
+
+    // Swap instance pointers
+    std::swap(ObjectInstances[Obj1], ObjectInstances[Obj2]);
+
+    // Update object's internal vars
+    ObjectInstances[Obj1]->EngineIdx = Obj1;
+    ObjectInstances[Obj2]->EngineIdx = Obj2;
+}
+
