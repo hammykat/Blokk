@@ -23,8 +23,7 @@ public:
     static inline ObjectManager *EngineObjects;
 
     // Remembers where it is located in the engine's data
-    size_t EngineVelIdx;
-    size_t EngineVisIdx;
+    size_t EngineIdx;
 
     // Cache the update for faster updates
     queue<FieldUpdate>& EngineUpdates;
@@ -41,8 +40,7 @@ public:
         EngineUpdates(EngineObjects->FieldUpdateCommands),
         EngineDoubleUpdates(EngineObjects->DoubleFieldUpdateCommands),
         IsStatic(CP.Velocity.x == 0 && CP.Velocity.y == 0),
-        EngineVelIdx((IsStatic)? EngineObjects->StaticXPositions.size() : EngineObjects->DynamicXPositions.size()),
-        EngineVisIdx(SIZE_MAX),
+        EngineIdx(0),
         IsVisible(false)
     {
         EngineObjects->Creations.push(CP);
@@ -92,7 +90,7 @@ public:
         IsStatic = true;
 
         // Remove from vel list
-        EngineObjects->IntoStatic.push(EngineVelIdx);
+        EngineObjects->IntoStatic.push(EngineIdx);
     }
 
     // Set to dynamic
@@ -103,7 +101,7 @@ public:
 
         // Add to vel list
         EngineObjects->IntoDynamic.push(
-            DynamicRegisterInfo{Vel, EngineVelIdx}
+            DynamicRegisterInfo{Vel, EngineIdx}
         );
     }
 
@@ -114,7 +112,7 @@ public:
         IsVisible = true;
 
         // Get into visible
-        EngineObjects->IntoVisible.push(EngineVisIdx);
+        EngineObjects->IntoVisible.push(EngineIdx);
     }
 
     // Set to invisible
@@ -124,7 +122,7 @@ public:
         IsVisible = false;
 
         // Remove from visible
-        EngineObjects->FromVisible.push(EngineVisIdx);
+        
     }
 
     // VELOCITY -----------------------------------------------------
@@ -177,13 +175,7 @@ public:
     void AddVelocity(float XVel, float YVel);
 
     void AddVelocity(Vector2 Vel);
-
-    // SUBTRACT -------------------------------------------------
-
-    void SubtractVelocity(float XVel, float YVel);
-
-    void SubtractVelocity(Vector2 Vel);
-
+    
     // DIVIDE ---------------------------------------------------
 
     void DivideVelocity(float XVel, float YVel);
@@ -192,6 +184,7 @@ public:
 
     void DivideVelocityX(float Vel);
 
+    void DivideVelocityY(float Vel);
     
     // POSITION -------------------------------------------------
 
