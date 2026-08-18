@@ -6,12 +6,12 @@
 #include <atomic>
 
 class ObjectManager;
-#include "IndexRange.hpp"
+class Worker;
 
 using namespace std;
 
 using WorkerJobFunction =
-    void (ObjectManager::*)(IndexRange);
+    void (ObjectManager::*)(IndexRange, Worker*);
 
 
 // Thread
@@ -44,7 +44,7 @@ public:
             Lock.unlock();
 
             // Same function + same manager for everyone
-            (Manager->*CurrentJob)(RangeToProcess);
+            (Manager->*CurrentJob)(RangeToProcess, this);
 
             // Tell manager we're finished
             {
@@ -105,6 +105,8 @@ public:
     inline static WorkerJobFunction CurrentJob = nullptr;
     atomic<bool> Running = true;
 
+    vector<uint32_t> IdxResult;
+
 private:
 
     IndexRange TargetRange;
@@ -120,3 +122,54 @@ private:
 
 // Engine threading -----------------------------------------------
 
+// Main function
+void ObjectManager::EngineProcess() 
+{
+    CurrentFrameTime = TimeEngineProcesses();
+    
+    if(!OptimalThreadCountReached)
+    {
+        if(OpenedThreads == ThreadCount) {
+            OptimalThreadCountReached = true;
+        } else {
+
+        // If a thread was opnened previous frame
+        if(ThreadOpenedPrevFrame)
+        {
+            // If took longer than previous frame
+            if(CurrentFrameTime > PrevFrameTime)
+            {
+                // Destroy a thread
+                DestroyThread();
+
+                // Update vars
+                ThreadDestroyedPrevFrame = true;
+                ThreadOpenedPrevFrame = false;
+            }
+            // If took too long
+            else if(CurrentFrameTime > TargetFrameTime)
+            {
+                // Open another thread
+                OpenThread();
+
+                // Update var
+                ThreadOpenedPrevFrame = true;
+            }
+        } 
+        else // If a thread wasn't opened the previous frame
+        {
+            // If it took too long
+            if(CurrentFrameTime > TargetFrameTime)
+            {
+                // Open another thread
+                OpenThread();
+
+                // Update var
+                ThreadOpenedPrevFrame = true;
+            }
+        }
+        }
+
+        PrevFrameTime = CurrentFrameTime;
+    }
+}
