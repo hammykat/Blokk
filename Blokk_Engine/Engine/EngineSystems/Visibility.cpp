@@ -3,6 +3,28 @@
 
 #include "EngineClassData.hpp"
 
+// Forward declarations for SIMD helper functions
+vector<uint32_t> CheckVisible_SIMD_AVX2(
+    uint32_t ScreenWidth, uint32_t ScreenHeight,
+    uint32_t *AnimWidths, uint32_t *AnimHeights,
+    float* PosX, float* PosY,
+    uint32_t Size, uint32_t StartIdx
+);
+
+vector<uint32_t> CheckVisible_SIMD_AVX512(
+    uint32_t ScreenWidth, uint32_t ScreenHeight,
+    uint32_t* AnimWidths, uint32_t* AnimHeights,
+    float* PosX, float* PosY,
+    uint32_t Size, uint32_t StartIdx
+);
+
+vector<uint32_t> CheckVisible_SIMD_SSE2(
+    uint32_t ScreenWidth, uint32_t ScreenHeight,
+    uint32_t* AnimWidths, uint32_t* AnimHeights,
+    float* PosX, float* PosY,
+    uint32_t Size, uint32_t StartIdx
+);
+
 void ObjectManager::CheckVisibleRange(IndexRange Range, Worker* Thread)
 {
     uint32_t Start = Range.Start;
@@ -52,6 +74,7 @@ void ObjectManager::CheckVisibleRange(IndexRange Range, Worker* Thread)
     }
 }
 
+__attribute__((target("avx2")))
 // AXV / AXV2 (256 bit - 8 floats) - 8 at a time
 vector<uint32_t> CheckVisible_SIMD_AVX2( 
     uint32_t ScreenWidth, uint32_t ScreenHeight,
@@ -140,6 +163,7 @@ vector<uint32_t> CheckVisible_SIMD_AVX2(
 }
 
 
+__attribute__((target("sse2")))
 vector<uint32_t> CheckVisible_SIMD_SSE2(
     uint32_t ScreenWidth,
     uint32_t ScreenHeight,
@@ -240,7 +264,7 @@ vector<uint32_t> CheckVisible_SIMD_SSE2(
     return ResultIdx;
 }
 
-
+__attribute__((target("avx512f")))
 vector<uint32_t> CheckVisible_SIMD_AVX512(
     uint32_t ScreenWidth,
     uint32_t ScreenHeight,
