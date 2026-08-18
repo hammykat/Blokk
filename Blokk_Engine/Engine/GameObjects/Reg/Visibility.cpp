@@ -1,4 +1,4 @@
-#include "GameObject.hpp"
+/* #include "GameObject.hpp"
 
 void ObjectManager::Hide() 
 {
@@ -62,4 +62,4 @@ void ObjectManager::ToggleVisibility()
         // Set to visible
         SetToVsisible();
     }
-} 
+}  */
