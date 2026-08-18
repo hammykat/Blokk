@@ -32,14 +32,14 @@ Register Name | Register Width | # Of Objects at once
 
 For example, it stores them like:
 
-| Positions | --|--|--|--
+| Positions | | | |-
 |---|---|---|---|---
 | x | x | x | x | x
 | y | y | y | y | y
 
 Instead of:
 
-| Positions | -----|------|-----
+| Positions | | |-
 |------|------|------|-----
 | x, y | x, y | x, y | x, y 
 
