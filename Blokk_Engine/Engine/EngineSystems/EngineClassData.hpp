@@ -31,7 +31,11 @@ struct IndexRange {
     }
 };
 
-
+/*
+Engine stores all data for each fields in one vector,
+keeps track of static object count and dynamic object count
+and then keeps data in sync (Splits static and Dynamic objects)
+*/
 
 //  Object manager
 class ObjectManager 
@@ -45,13 +49,13 @@ public:
     SIMDLevel CoreCount;
 
 
-    ObjectManager(size_t FPS) :
+    ObjectManager(Vector2 ScreenDimensions, size_t FPS = 30) :
         
         // Threads
         ThreadOpenedPrevFrame(false),
         ThreadDestroyedPrevFrame(false),
         OptimalThreadCountReached(false),
-        ThreadCount(std::thread::hardware_concurrency()),
+        ThreadCount(thread::hardware_concurrency()),
         OpenedThreads(0),
         PrevOpenedThreads(0),
 
@@ -62,7 +66,11 @@ public:
         TargetFrameTime(FrameTime * 0.8),
 
         // SIMD
-        SIMDRegisterLevel(DetectSIMD())
+        SIMDRegisterLevel(DetectSIMD()),
+
+        // Screen
+        ScreenWidth(ScreenDimensions.x),
+        ScreenHeight(ScreenDimensions.y)
     {
         // Open starting thread
         OpenThread();
@@ -76,51 +84,39 @@ public:
 private:
 
     SIMDLevel SIMDRegisterLevel;
+    uint32_t ScreenHeight;
+    uint32_t ScreenWidth;
 
     // Positions
-    vector<float> StaticXPositions;
-    vector<float> StaticYPositions;
-
-    vector<float> DynamicXPositions;
-    vector<float> DynamicYPositions;
+    vector<float> XPositions;
+    vector<float> YPositions;
 
     // Velocities
-
-    /* Static vels not stored as they're all 0
-    vector<float> StaticXVelocities;
-    vector<float> StaticYVelocities; */
-
     vector<float> XVelocities;
     vector<float> YVelocities;
 
     // Collisions
     vector<float> Right;
     vector<float> Left;
-    vector<CollisionBoxType> StaticCollisionTypes;
-    vector<CollisionBoxType> DynamicCollisionTypes;
-    vector<CollisionHit> DynamicCollisions;
-    vector<CollisionHit> StaticCollisions;
+    vector<CollisionBoxType> CollisionTypes;
+    vector<CollisionHit> Collisions;
     
     // Animations
-    vector<uint32_t> VisibleFrameNums;
-    vector<uint32_t> InvisibleFrameNums;
-    vector<uint32_t> VisibleAnimNums;
-    vector<uint32_t> InVisibleAimNums;
+    vector<uint32_t> FrameNums;
+    vector<uint32_t> AnimNums;
     // Stores the animation names, points to an index in the animations
     unordered_map<string, uint32_t> AnimNames;
     // Stores a list of animations
     vector<vector<Texture2D>> Frames;
     vector<vector<uint32_t>> FrameWidths;
     vector<vector<uint32_t>> FrameHeights;
+    
+    // Visibility
+    vector<uint32_t> AnimHeights;
+    vector<uint32_t> AnimWidths;
 
     // Pointers to object instances
     vector<GameObject*> ObjectInstances;
-
-    // Index tracking 
-    vector<uint32_t> ValidVisibleIdxs;
-    vector<uint32_t> ValidVelIdxs;
-    vector<uint32_t> ValidAnimIdxs;
-    vector<uint32_t> ValidCollIdxs;
 
     // Update commands
     queue<FieldUpdate> FieldUpdateCommands;
@@ -134,12 +130,7 @@ private:
     queue<uint32_t> FromVisible;
 
     // Rendering
-    std::vector<RenderTypes> RenderTypes;
-    std::vector<uint32_t> RenderObjects;
-
-    // Ranges
-    queue<Range> VelRanges;
-    queue<Range> CollisionRanges;
+    vector<uint32_t> RenderObjectIdxs;
 
     // Workers
     uint32_t ThreadCount;
@@ -156,8 +147,10 @@ private:
     double FrameTime;
     vector<unique_ptr<Worker>> Workers;
     
-    // 
-    size_t ObjectCount;
+    // Conuts
+    uint32_t ObjectCount;
+    uint32_t StaticObjectCount;
+    uint32_t DynamicObjectCount;
 
     // Functions -------------------------------------------------
 
@@ -207,10 +200,27 @@ private:
 
         // EngineProcesses-------------------------------------
 
+        { // User updates
+            
+            // Process single update commands
+            while(!FieldUpdateCommands.empty())
+            {
+                // Process front command
+                ProcessFieldUpdateCommand(FieldUpdateCommands.front());
+            }
+
+            // Process double update commands
+            while(!DoubleFieldUpdateCommands.empty())
+            {
+                // Process front command
+                ProcessDoubleUpdateCommand(DoubleFieldUpdateCommands.front());
+            }
+        }
+
         { // Velocities 
 
             // Get ranges
-            vector<IndexRange> VelRanges = GetRanges(XVelocities.size(), OpenedThreads);
+            vector<IndexRange> VelRanges = GetRanges(DynamicObjectCount, OpenedThreads);
             // Set function
             Worker::CurrentJob = UpdateRangeOfPositions;
             // Loop through
@@ -230,14 +240,44 @@ private:
             { // Incrementing
                 
                 // Let the main thread increment
-                IncrementFrames(VisibleFrameNums);
-                IncrementFrames(InvisibleFrameNums);
+                IncrementFrames(FrameNums);
             }
 
             { // Visibility checks
+                // Get ranges
+                vector<IndexRange> VisRanges = GetRanges(ObjectCount, OpenedThreads);
+                // Set function
+                Worker::CurrentJob = CheckVisibleRange;
+                // Loop through
+                for(size_t i = 0; i < OpenedThreads; i++)
+                {
+                    // Give it a range
+                    Workers[i]->SetRange(VisRanges[i]);
+                }
 
+                // Wait for each to finish
+                for (auto& Worker : Workers) {
+                    Worker->WaitUntilFinished();
+                }
 
+                // Clear idxs
+                RenderObjectIdxs.clear();
+
+                // Loop through workers
+                for (auto& Worker : Workers)
+                {
+                    // Get the idxs
+                    RenderObjectIdxs.insert(
+                        RenderObjectIdxs.end(),
+                        Worker->IdxResult.begin(),
+                        Worker->IdxResult.end()
+                    );
+                }
             }
+        }
+
+        { // Render
+            RenderObjects();
         }
 
 
@@ -251,9 +291,11 @@ private:
         return TotalTime;
     }
 
+    void SwapObjects(uint32_t Obj1, uint32_t Obj2);
+
     // POSITIONS W/ VELS -------------------------------------------------------------------
 
-    void UpdateRangeOfPositions(IndexRange TRange);
+    void UpdateRangeOfPositions(IndexRange TRange, Worker* Thread);
 
     void UpdatePositions(
         float* PosX, float* PosY, 
@@ -263,33 +305,22 @@ private:
 
     // Rendering --------------------------------------------------------
 
-    void GetRenderObjects()
-    {
-        for(auto&& A : RenderObjects)
-        {
-
-        }
-    }
-
     void RenderObjects()
     {
-        
+        for(auto Idx : RenderObjectIdxs)
+        {
+            uint32_t Frame = FrameNums[Idx];
+            uint32_t Anim = AnimNums[Idx];
+
+            Texture2D Texture = Frames[Anim][Frame];
+            
+            DrawTexture(Texture, XPositions[Idx], YPositions[Idx], WHITE);
+        }
     }
 
     // Visibility checks --------------------------------------
 
-    void CheckVisible(
-        vector<float>& XPositions,
-        vector<float>& YPositions,
-        uint32_t Size
-    )
-    {
-
-    }
-
-    // SIMD helpers --------------------
-
-
+    void CheckVisibleRange(IndexRange Range, Worker* Thread);
 
     // Updates ----------------------------------------------------------------
 
@@ -297,7 +328,7 @@ private:
 
     void ProcessAddCommands(ObjectCreationParams Fields);
 
-    void ProcessDoubleUpdateCommands(DoubleFieldUpdate Command);
+    void ProcessDoubleUpdateCommand(DoubleFieldUpdate Command);
 
     // Frame increment------------------------------
 
@@ -307,5 +338,10 @@ private:
 
     // Animations ----------------------------------------------------------
 
+    void CreateNewEmptyAnimation(string Name);
+
+    void CreateAnimation(string Name, vector<Texture2D>& Frames);
+
+    void AddFramesToAnimation(string Name, vector<Texture2D>& Frames);
 
 };
