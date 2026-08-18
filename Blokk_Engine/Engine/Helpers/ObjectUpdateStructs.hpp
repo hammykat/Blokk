@@ -38,4 +38,5 @@ struct ObjectCreationParams
 {
     Vector2 Position;
     Vector2 Velocity;
+    GameObject *Object;
 };
