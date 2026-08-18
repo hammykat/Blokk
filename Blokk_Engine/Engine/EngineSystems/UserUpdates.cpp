@@ -4,7 +4,8 @@
 #include "GameTypes.hpp"
 #include "GameObject.hpp"
 
-void ObjectManager::ProcessFieldUpdateCommand(FieldUpdate Command)
+template <ConfiguredUpdateType T>
+void ObjectManager::ProcessFieldUpdateCommand(FieldUpdate<T> Command)
 {
     switch(Command.Type) 
     {
@@ -33,7 +34,7 @@ void ObjectManager::ProcessFieldUpdateCommand(FieldUpdate Command)
     }
 }
 
-void ObjectManager::ProcessDoubleUpdateCommand(DoubleFieldUpdate Command)
+void ObjectManager::ProcessDoubleUpdateCommand(DoubleFieldUpdate<float> Command)
 {
     switch(Command.Type) 
     {
@@ -90,11 +91,7 @@ void ObjectManager::ProcessAddCommands(ObjectCreationParams Fields)
         YPositions.push_back(Fields.Position.y);
 
         // Swap position to keep with dynamic object data
-        std::swap(XPositions[DynamicObjectCount], XPositions[ObjectCount - 1]);
-        std::swap(YPositions[DynamicObjectCount], YPositions[ObjectCount - 1]);
-
-        // Set it's idx
-        Fields.Object->EngineIdx = DynamicObjectCount;
+        SwapObjects(DynamicObjectCount, ObjectCount - 1);
 
         // Add velocity
         XVelocities.push_back(XVel);
