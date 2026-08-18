@@ -5,10 +5,10 @@ A beginner-friendly, open source 2D game engine in **C++ and raylib** designed f
 It is designed to have:
 - **Beginner-friendly API** - Simple, easy to understand functions and systems designed to be easy to use and understand.
 - **High Performance** - The engine is designed to be high performance and utilizes things like **SIMD**, **SoA for data layout**, and **Parallel tasking** to distribute work across cores.
-- **Adaptability** - The engine will time it's processes and adapt to the user's computer, allowing for it to be used on many computers of different speed.
+- **Adaptability** - The engine will time its processes and adapt to the user's computer, allowing for it to be used on many computers of different speed.
 - **2D Focused** - The engine is built specifically around 2D game development.
 - **C++** -- Full access to C++ and the underlying engine.
-- **LightWeight** - The engine is made to be lightweight and uses **raylib**
+- **Lightweight** - The engine is made to be lightweight and uses **raylib**
 - **Open source** - Anyone can inspect, learn from, contribute to, and improve the engine.
 
 The goal is to provide a simple API for beginners without sacrificing the performance and control expected from a C++ engine.
@@ -24,11 +24,11 @@ The engine uses many things to be high-performance, like:
 - Batched processing
 - Separation of static and dynamic object data
 
-The engine is designed for extreme speed, utilizing things like efficient data layout and SIMD to handle hundreds of thousands to millions of objects at stable fps (For more about how the engine works, check the [background engine architecture](Documentation/EngineArchitecture.md).
+The engine is designed for extreme speed, utilizing things like efficient data layout and SIMD to handle a very large amount (hundreds of thousands to millions in later updates) of objects at stable fps (For more about how the engine works, check out the [background engine architecture](Documentation/EngineArchitecture.md).
 
 ## Documentation
 
-For a complete documentation, check [here](Documentation)
+For a complete documentation, check out the [documentation](Documentation).
 Here you'll see how the engine is structured, how to use it, and cool features it has!
 
 ## Support / Contributing
@@ -38,7 +38,7 @@ If you want to offer support, hang out, contribute and get announcements when a 
 In the server:
 
 * We'll send announcements about new updates
-* You can give contribute (see below)
+* You can contribute (see below)
 * You can chill and hang out with people
 * You can see what's in the works for future updates
 
@@ -55,6 +55,6 @@ You can contribute in many ways, such as:
 
 And any other place you think you could help.
 
-### Liscencing
+### Licensing
 This project is protected under the zlib license
-For more, [check here](LISCENSE)
+For more, [check here](LICENSE)
