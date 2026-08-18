@@ -61,6 +61,7 @@ void ObjectManager::UpdatePositions(
 
 // Helpers for SIMD velocities ---------------------------
 
+__attribute__((target("avx2")))
 // AXV / AXV2 (256 bit - 8 floats) - 8 at a time
 void ProcessVelocities_SIMD_AVX2(
     float* PosX, float* PosY, 
@@ -102,7 +103,7 @@ void ProcessVelocities_SIMD_AVX2(
 }
 
 
-
+__attribute__((target("avx512f")))
 // AXV512 (512 bit, 16 floats) - 16 at a time
 void ProcessVelocities_SIMD_AVX512(
     float* PosX, float* PosY, 
@@ -144,7 +145,7 @@ void ProcessVelocities_SIMD_AVX512(
 }
 
 
-
+__attribute__((target("sse2")))
 // SSE2 (128 bit, 4 floats) - 4 at a time
 void ProcessVelocities_SIMD_SSE2(
     float* PosX, float* PosY, 
