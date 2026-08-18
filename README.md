@@ -35,6 +35,13 @@ Here you'll see how the engine is structured, how to use it, and cool features i
 
 If you want to offer support, hang out, contribute and get announcements when a new update gets posted, join the [discord server](https://discord.gg/58zz4ZZbZ)!
 
+In the server:
+
+* We'll send announcements about new updates
+* You can give contribute (see below)
+* You can chill and hang out with people
+* You can see what's in the works for future updates
+
 You can contribute in many ways, such as:
 
 * Testing
@@ -48,6 +55,6 @@ You can contribute in many ways, such as:
 
 And any other place you think you could help.
 
-##### Liscence
+### Liscencing
 This project is protected under the zlib license
 For more, [check here](LISCENSE)
