@@ -26,8 +26,10 @@ public:
     size_t EngineIdx;
 
     // Cache the update for faster updates
-    queue<FieldUpdate>& EngineUpdates;
-    queue<DoubleFieldUpdate>& EngineDoubleUpdates;
+    queue<FieldUpdate<float>>& EngineUpdates;
+    queue<DoubleFieldUpdate<float>>& EngineDoubleUpdates;
+    queue<FieldUpdate<bool>>& EngineBoolUpdates;
+    queue<FieldUpdate<uint32_t>>& EngineUIntUpdates;
     string CurrentAnim;
 
     // States
@@ -39,6 +41,8 @@ public:
     GameObject(ObjectCreationParams CP = {{0, 0}, {0, 0}}) :
         EngineUpdates(EngineObjects->FieldUpdateCommands),
         EngineDoubleUpdates(EngineObjects->DoubleFieldUpdateCommands),
+        EngineBoolUpdates(EngineObjects->BoolUpdates),
+        EngineUIntUpdates(EngineObjects->UIntUpdates),
         IsStatic(CP.Velocity.x == 0 && CP.Velocity.y == 0),
         EngineIdx(0),
         IsVisible(false)
@@ -48,19 +52,46 @@ public:
 
     // HELPERS -----------------------------------------------------
 
+    template <ConfiguredUpdateType T>
     void UpdateEngineData(
         CommandTypes Type, 
-        vector<float> *Values, 
-        size_t Idx, float OtherVal
+        vector<T> *Values, 
+        T OtherVal,
+        uint32_t Idx 
     ) {
-        EngineUpdates.push(
-            (FieldUpdate) {
-                Type,
-                Values,
-                Idx,
-                OtherVal
-            }
-        );
+        if constexpr(std::is_same_v<T, float>) 
+        {
+            EngineUpdates.push(
+                FieldUpdate<float>{
+                    Type,
+                    Values,
+                    Idx,
+                    OtherVal
+                }
+            );
+        }
+        else if constexpr(std::is_same_v<T, uint32_t>) 
+        {
+            EngineUIntUpdates.push(
+                FieldUpdate<uint32_t>{
+                    Type,
+                    Values,
+                    Idx,
+                    OtherVal
+                }
+            );
+        }
+        else if constexpr(std::is_same_v<T, bool>) 
+        {
+            EngineBoolUpdates.push(
+                FieldUpdate<bool>{
+                    Type,
+                    Values,
+                    Idx,
+                    OtherVal
+                }
+            );
+        }
     }
     
     void UpdateEngineData_Double(
@@ -69,10 +100,10 @@ public:
         vector<float> *YVals, 
         const float XUpdateVal,
         const float YUpdateVal,
-        size_t Idx
+        uint32_t Idx
     ) {
         EngineDoubleUpdates.push(
-            DoubleFieldUpdate{
+            DoubleFieldUpdate<float>{
                 Type,
                 XVals, 
                 YVals,
@@ -103,26 +134,6 @@ public:
         EngineObjects->IntoDynamic.push(
             DynamicRegisterInfo{Vel, EngineIdx}
         );
-    }
-
-    // Set to visible
-    void SetToVisible() // Assumes that the object was invisible before
-    {
-        // Update local var
-        IsVisible = true;
-
-        // Get into visible
-        EngineObjects->IntoVisible.push(EngineIdx);
-    }
-
-    // Set to invisible
-    void SetToInvisible() // Assumes that the object was visible before
-    {
-        // Update local var
-        IsVisible = false;
-
-        // Remove from visible
-        
     }
 
     // VELOCITY -----------------------------------------------------
@@ -220,8 +231,7 @@ public:
 
     // Animation ------------------------------------------
 
-    void SetAnimation(string AnimName)
-    {
+    void SetAnimation(string AnimName);
 
-    }
+    void SetFrameNum(uint32_t FrameNum);
 };

@@ -1,5 +1,28 @@
 /* #include "GameObject.hpp"
 
+// Set to visible
+    void SetToVisible() // Assumes that the object was invisible before
+    {
+        // Update local var
+        IsVisible = true;
+
+        // Get into visible
+        UpdateEngineData<bool>(
+            CommandTypes::Set,
+            &EngineObjects->IsVisible
+        );
+    }
+
+    // Set to invisible
+    void SetToInvisible() // Assumes that the object was visible before
+    {
+        // Update local var
+        IsVisible = false;
+
+        // Remove from visible
+        
+    }
+
 void ObjectManager::Hide() 
 {
     // If visible

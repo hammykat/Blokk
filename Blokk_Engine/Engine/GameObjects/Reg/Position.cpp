@@ -17,13 +17,13 @@ void GameObject::SetPosition(Vector2 TargetPos) {
 
 void GameObject::SetXPosition(float Target) 
 {
-    UpdateEngineData(CommandTypes::Set, 
+    UpdateEngineData<float>(CommandTypes::Set, 
             &EngineObjects->XPositions, EngineIdx, Target);
 }
 void GameObject::SetYPosition(float Target) 
 {
     // Set
-    UpdateEngineData(CommandTypes::Set, 
+    UpdateEngineData<float>(CommandTypes::Set, 
             &EngineObjects->YPositions, EngineIdx, Target);
 }
 
@@ -52,11 +52,11 @@ void GameObject::ChangePosition(Vector2 Change) {
 
 void GameObject::ChangeXPosition(float X) 
 {
-    UpdateEngineData(CommandTypes::Add, 
+    UpdateEngineData<float>(CommandTypes::Add, 
         &EngineObjects->XPositions, EngineIdx, X);
 }
 void GameObject::ChangeYPosition(float Y) 
 {
-    UpdateEngineData(CommandTypes::Add, 
+    UpdateEngineData<float>(CommandTypes::Add, 
         &EngineObjects->YPositions, EngineIdx, Y);
 }
