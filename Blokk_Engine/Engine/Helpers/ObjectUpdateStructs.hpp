@@ -1,7 +1,11 @@
 #pragma once
 
 #include <vector>
+#include <concepts>
+
 #include "raylib.h"
+
+class GameObject;
 
 enum class CommandTypes {
     Destroy,
@@ -18,21 +22,34 @@ enum class RenderTypes {
     Texture
 };
 
+
+// Updates 
+
+template <typename T>
+concept ConfiguredUpdateType =
+    std::same_as<T, uint32_t> ||
+    std::same_as<T, float> ||
+    std::same_as<T, bool>;
+
+template<ConfiguredUpdateType T>
 struct FieldUpdate {
     CommandTypes Type;
-    std::vector<float>* Vector;
-    size_t Idx;
-    float Value;
+    std::vector<T>* Vector;
+    uint32_t Idx;
+    T Value;
 };
 
+template <ConfiguredUpdateType T>
 struct DoubleFieldUpdate {
     CommandTypes Type;
-    std::vector<float> *XVector;
-    std::vector<float> *YVector;
-    float XValue;
-    float YValue;
-    size_t Idx;
+    std::vector<T> *XVector;
+    std::vector<T> *YVector;
+    T XValue;
+    T YValue;
+    uint32_t Idx;
 };
+
+// Creation
 
 struct ObjectCreationParams 
 {
