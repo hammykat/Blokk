@@ -15,7 +15,6 @@
 #include "GameTypes.hpp"
 #include "ObjectUpdateStructs.hpp"
 #include "SIMD_Finder.hpp"
-#include "Threading.hpp"
 
 class ObjectManager;
 class GameObject;
@@ -30,6 +29,8 @@ struct IndexRange {
         return End - Start;
     }
 };
+
+#include "Threading.hpp"
 
 /*
 Engine stores all data for each fields in one vector,
@@ -119,15 +120,15 @@ private:
     vector<GameObject*> ObjectInstances;
 
     // Update commands
-    queue<FieldUpdate> FieldUpdateCommands;
-    queue<DoubleFieldUpdate> DoubleFieldUpdateCommands;
+    queue<FieldUpdate<float>> FieldUpdateCommands;
+    queue<DoubleFieldUpdate<float>> DoubleFieldUpdateCommands;
     queue<ObjectCreationParams> Creations;
 
     queue<DynamicRegisterInfo> IntoDynamic;
     queue<uint32_t> IntoStatic;
 
-    queue<uint32_t> IntoVisible;
-    queue<uint32_t> FromVisible;
+    queue<FieldUpdate<bool>> BoolUpdates;
+    queue<FieldUpdate<uint32_t>> UIntUpdates;
 
     // Rendering
     vector<uint32_t> RenderObjectIdxs;
@@ -191,7 +192,6 @@ private:
         OpenedThreads--;
     }
 
-    // TODO: Complete this
     // Do the engine processes and time it
     double TimeEngineProcesses()
     {
@@ -324,11 +324,12 @@ private:
 
     // Updates ----------------------------------------------------------------
 
-    void ProcessFieldUpdateCommand(FieldUpdate Command);
+    template <ConfiguredUpdateType T>
+    void ProcessFieldUpdateCommand(FieldUpdate<T> Command);
 
     void ProcessAddCommands(ObjectCreationParams Fields);
 
-    void ProcessDoubleUpdateCommand(DoubleFieldUpdate Command);
+    void ProcessDoubleUpdateCommand(DoubleFieldUpdate<float> Command);
 
     // Frame increment------------------------------
 
