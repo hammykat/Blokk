@@ -8,6 +8,22 @@
 
 using namespace std;
 
+// Forward declarations for SIMD helper functions
+void IncrementFrames_SIMD_AVX2(
+    vector<uint32_t>& FrameNums,
+    size_t Size
+);
+
+void IncrementFrames_SIMD_AVX512(
+    vector<uint32_t>& FrameNums,
+    size_t Size
+);
+
+void IncrementFrames_SIMD_SSE2(
+    vector<uint32_t>& FrameNums,
+    size_t Size
+);
+
 void ObjectManager::IncrementFrames(
     vector<uint32_t>& FrameNums
 ) {
@@ -33,6 +49,7 @@ void ObjectManager::IncrementFrames(
 
 // Helpers for incrementing with SIMD --------------------
 
+__attribute__((target("avx2")))
 // AXV / AXV2 (256 bit - 8 floats) - 8 at a time
 void IncrementFrames_SIMD_AVX2(
     vector<uint32_t>& FrameNums,
@@ -69,7 +86,7 @@ void IncrementFrames_SIMD_AVX2(
 }
 
 
-
+__attribute__((target("avx512f")))
 // AXV512 (512 bit, 16 floats) - 16 at a time
 void IncrementFrames_SIMD_AVX512(
     vector<uint32_t>& FrameNums,
@@ -106,7 +123,7 @@ void IncrementFrames_SIMD_AVX512(
 }
 
 
-
+__attribute__((target("sse2")))
 // SSE2 (128 bit, 4 floats) - 4 at a time
 void IncrementFrames_SIMD_SSE2(
     vector<uint32_t>& FrameNums,
