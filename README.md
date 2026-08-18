@@ -13,7 +13,7 @@ It is designed to have:
 
 The goal is to provide a simple API for beginners without sacrificing the performance and control expected from a C++ engine.
 
-### Speed 
+## High-Performance 
 
 The engine uses many things to be high-performance, like:
 - Data-oriented design
@@ -24,7 +24,12 @@ The engine uses many things to be high-performance, like:
 - Batched processing
 - Separation of static and dynamic object data
 
-The engine is designed for extreme speed, utilizing things like efficient data layout and SIMD to handle hundreds of thousands to millions of objects at stable fps (For more about how the engine works, check the [background engine architecture](Documentation/EngineArchitecture.md)).
+The engine is designed for extreme speed, utilizing things like efficient data layout and SIMD to handle hundreds of thousands to millions of objects at stable fps (For more about how the engine works, check the [background engine architecture](Documentation/EngineArchitecture.md).
+
+## Documentation
+
+For a complete documentation, check [here](Documentation)
+Here you'll see how the engine is structured, how to use it, and cool features it has!
 
 ## Support / Contributing
 
