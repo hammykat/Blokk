@@ -36,10 +36,6 @@
 | `void AddVelocity(float XVel, float YVel);`            | Adds the input X and Y values to the velocity                 |
 | `void AddVelocity(Vector2 Vel);`                       | Adds the X and Y values of a Vector2 to the velocity          |
 | ----------------------------                           | --------------------------------                              |
-| **Subtract**                                           |                                                               |
-| `void SubtractVelocity(float XVel, float YVel);`       | Subtracts the input X and Y values from the velocity          |
-| `void SubtractVelocity(Vector2 Vel);`                  | Subtracts the X and Y values of a Vector2 from the velocity   |
-| ----------------------------                           | --------------------------------                              |
 | **Divide**                                             |                                                               |
 | `void DivideVelocity(float XVel, float YVel);`         | Divides the X and Y velocity by specific values               |
 | `void DivideVelocity(Vector2 Vel);`                    | Divides the X and Y velocity by the values in a Vector2       |
