@@ -38,6 +38,15 @@ keeps track of static object count and dynamic object count
 and then keeps data in sync (Splits static and Dynamic objects)
 */
 
+using CheckVisibleRangeFnPtr = void(ObjectManager::*)(
+    IndexRange Range, Worker* Thread);
+
+using UpdatePositionsFnPtr = void(ObjectManager::*)(
+    float* PosX, float* PosY, 
+    const float* VelX, const float *VelY, 
+    size_t Size
+);
+
 //  Object manager
 class ObjectManager 
 {
@@ -148,12 +157,37 @@ private:
     double FrameTime;
     vector<unique_ptr<Worker>> Workers;
     
-    // Conuts
+    // Counts
     uint32_t ObjectCount;
     uint32_t StaticObjectCount;
     uint32_t DynamicObjectCount;
 
     // Functions -------------------------------------------------
+
+    // Get the right function implementations according to the user's SIMD
+    void GetFunctions()
+    {
+        switch(SIMDRegisterLevel)
+        {
+            // 256 bit
+            case SIMDLevel::AVX:
+            case SIMDLevel::AVX2:
+                CheckVisibleRange = CheckVisibilityFn<SIMDLevel::AVX>;
+                UpdatePositions = UpdatePositionsFn<SIMDLevel::AVX>;
+                break;
+            
+            // 512 bit
+            case SIMDLevel::AVX512:
+                CheckVisibleRange = CheckVisibilityFn<SIMDLevel::AVX512>;
+                UpdatePositions = UpdatePositionsFn<SIMDLevel::AVX512>;
+                break;
+
+            // 128 bit - default
+            default:
+                CheckVisibleRange = CheckVisibilityFn<SIMDLevel::SSE2>;
+                UpdatePositions = UpdatePositionsFn<SIMDLevel::SSE2>;
+        }
+    }
 
     // Split a number into x ranges
     vector<IndexRange> GetRanges(size_t Length, size_t Count)
@@ -297,7 +331,10 @@ private:
 
     void UpdateRangeOfPositions(IndexRange TRange, Worker* Thread);
 
-    void UpdatePositions(
+    UpdatePositionsFnPtr UpdatePositions;
+
+    template <SIMDLevel Level>
+    void UpdatePositionsFn(
         float* PosX, float* PosY, 
         const float* VelX, const float *VelY, 
         size_t Size
@@ -320,7 +357,10 @@ private:
 
     // Visibility checks --------------------------------------
 
-    void CheckVisibleRange(IndexRange Range, Worker* Thread);
+    template <SIMDLevel Level>
+    void CheckVisibilityFn(IndexRange Range, Worker* Thread);
+
+    CheckVisibleRangeFnPtr CheckVisibleRange;
 
     // Updates ----------------------------------------------------------------
 

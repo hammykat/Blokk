@@ -31,32 +31,30 @@ void ObjectManager::UpdateRangeOfPositions(IndexRange TRange, Worker* Thread)
     float *YVels = &YVelocities[TRange.Start];
 
     size_t Size = TRange.GetSize();
-    UpdatePositions(XPos, YPos, XVels, YVels, Size);
+    (this->*UpdatePositions)(XPos, YPos, XVels, YVels, Size);
 }
 
-void ObjectManager::UpdatePositions(
+template <SIMDLevel Level>
+void ObjectManager::UpdatePositionsFn(
     float* PosX, float* PosY, 
     const float* VelX, const float *VelY, 
     size_t Size
 ) {
-    switch(SIMDRegisterLevel) 
+    // 256 bit
+    if constexpr (Level == SIMDLevel::AVX || Level == SIMDLevel::AVX2)
     {
-        // 256 bit
-        case SIMDLevel::AVX:
-        case SIMDLevel::AVX2:
-            ProcessVelocities_SIMD_AVX2(PosX, PosY, VelX, VelY, Size);
-            break;
-
-        // 512 bit
-        case SIMDLevel::AVX512:
-            ProcessVelocities_SIMD_AVX512(PosX, PosY, VelX, VelY, Size);
-            break;
-
-        // 128 bit
-        default:
-            ProcessVelocities_SIMD_SSE2(PosX, PosY, VelX, VelY, Size);
+        ProcessVelocities_SIMD_AVX2(PosX, PosY, VelX, VelY, Size);
     }
-    
+    // 512 bit
+    else if constexpr (Level == SIMDLevel::AVX512)
+    {
+        ProcessVelocities_SIMD_AVX512(PosX, PosY, VelX, VelY, Size);
+    }
+    // 128 bit - default
+    else
+    {
+        ProcessVelocities_SIMD_SSE2(PosX, PosY, VelX, VelY, Size);
+    }
 }
 
 // Helpers for SIMD velocities ---------------------------

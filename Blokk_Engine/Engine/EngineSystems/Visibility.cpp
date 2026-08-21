@@ -25,52 +25,50 @@ vector<uint32_t> CheckVisible_SIMD_SSE2(
     uint32_t Size, uint32_t StartIdx
 );
 
-void ObjectManager::CheckVisibleRange(IndexRange Range, Worker* Thread)
+template <SIMDLevel Level>
+void ObjectManager::CheckVisibilityFn(IndexRange Range, Worker* Thread)
 {
-    uint32_t Start = Range.Start;
-    switch(SIMDRegisterLevel)
+    // 256 bit
+    if constexpr(Level == SIMDLevel::AVX || Level == SIMDLevel::AVX2)
     {
-        // 256 bit
-        case SIMDLevel::AVX:
-        case SIMDLevel::AVX2:
-            Thread->IdxResult =
-            CheckVisible_SIMD_AVX2(
-                ScreenWidth, ScreenHeight,
-                &AnimWidths[Start],
-                &AnimHeights[Start],
-                &XPositions[Start],
-                &YPositions[Start],
-                Range.GetSize(),
-                Range.Start
-            );
-            break;
-
-        // 512 bit
-        case SIMDLevel::AVX512:
-            Thread->IdxResult =
-            CheckVisible_SIMD_AVX512(
-                ScreenWidth, ScreenHeight,
-                &AnimWidths[Start],
-                &AnimHeights[Start],
-                &XPositions[Start],
-                &YPositions[Start],
-                Range.GetSize(),
-                Range.Start
-            );
-            break;
-
-        // 128 bit
-        default:
-            Thread->IdxResult =
-            CheckVisible_SIMD_SSE2(
-                ScreenWidth, ScreenHeight,
-                &AnimWidths[Start],
-                &AnimHeights[Start],
-                &XPositions[Start],
-                &YPositions[Start],
-                Range.GetSize(),
-                Range.Start
-            );
+        Thread->IdxResult =
+        CheckVisible_SIMD_AVX2(
+            ScreenWidth, ScreenHeight,
+            &AnimWidths[Start],
+            &AnimHeights[Start],
+            &XPositions[Start],
+            &YPositions[Start],
+            Range.GetSize(),
+            Range.Start
+        );
+    }
+    // 512 bit
+    else if constexpr (Level == SIMDLevel::AVX512)
+    {
+        Thread->IdxResult =
+        CheckVisible_SIMD_AVX512(
+            ScreenWidth, ScreenHeight,
+            &AnimWidths[Start],
+            &AnimHeights[Start],
+            &XPositions[Start],
+            &YPositions[Start],
+            Range.GetSize(),
+            Range.Start
+        );
+    }
+    // 128 bit - default
+    else
+    {
+        Thread->IdxResult =
+        CheckVisible_SIMD_SSE2(
+            ScreenWidth, ScreenHeight,
+            &AnimWidths[Start],
+            &AnimHeights[Start],
+            &XPositions[Start],
+            &YPositions[Start],
+            Range.GetSize(),
+            Range.Start
+        );
     }
 }
 
