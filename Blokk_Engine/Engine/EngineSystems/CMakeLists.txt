@@ -24,8 +24,3 @@ target_include_directories(Blokk PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../Errors
     ${CMAKE_SOURCE_DIR}/External/RayLibInclude
 )
-
-target_compile_options(Blokk PRIVATE
-    -mavx2
-    -mavx512f
-)
