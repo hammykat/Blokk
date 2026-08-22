@@ -393,14 +393,13 @@ private:
     {
         for(auto Idx : RenderObjectIdxs)
         {
-            uint32_t FrameCount = AnimFrameCounts[Idx];
+            uint32_t Anim = AnimNums[Idx];
+            uint32_t FrameCount = AnimFrameCounts[Anim];
 
             if (FrameCount == 0)
                 continue;
-            
-            uint32_t Frame = FrameNums[Idx] % FrameCount;
-            uint32_t Anim = AnimNums[Idx];
 
+            uint32_t Frame = FrameNums[Idx] % FrameCount;
             Texture2D Texture = Frames[Anim][Frame];
             
             DrawTexture(Texture, XPositions[Idx], YPositions[Idx], WHITE);
