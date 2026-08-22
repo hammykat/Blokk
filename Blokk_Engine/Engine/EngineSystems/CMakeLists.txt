@@ -4,7 +4,8 @@ add_library(Blokk
     # Engine systems
     IncrementFrames.cpp
     Velocities.cpp
-    Visibility.cpp
+    Visibility_BasicCulling.cpp
+    Visibility_AxisCulling.cpp
     UserUpdates.cpp
     Animations.cpp
     Threading.hpp
