@@ -42,6 +42,19 @@ In the server:
 * You can chill and hang out with people
 * You can see what's in the works for future updates
 
+You can contribute in many ways, such as:
+
+* Testing
+* Documentation
+* Code review
+* Bug fixes
+* UI design
+* Ideas
+* Suggestions
+* Feedback
+
+And any other place you think you could help.
+
 ## Required specs
 
 | Component            | Minimum                           |
@@ -58,20 +71,6 @@ In the server:
 | **C++**              | C++20                             |
 | **Build system**     | CMake                             |
 | **Compiler**         | MSVC, GCC, or Clang               |
-
-
-You can contribute in many ways, such as:
-
-* Testing
-* Documentation
-* Code review
-* Bug fixes
-* UI design
-* Ideas
-* Suggestions
-* Feedback
-
-And any other place you think you could help.
 
 ### Licensing
 This project is protected under the zlib license
