@@ -31,7 +31,6 @@ void ObjectManager::IncrementFrames(
     switch(SIMDRegisterLevel)
     {
         // 256 bit
-        case SIMDLevel::AVX:
         case SIMDLevel::AVX2:
             IncrementFrames_SIMD_AVX2(FrameNums, Size);
             break;
