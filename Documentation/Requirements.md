@@ -22,8 +22,10 @@
 
 ## Memory
 
-- Minimum: 4 GB RAM
-- Recommended: 8 GB RAM
+No fixed minimum has been established yet.
+Required memory depends on the application, asset sizes, and object count.
+
+- Recommended minimum: 4 GB RAM
 
 ## Graphics
 
