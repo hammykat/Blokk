@@ -6,6 +6,7 @@ void ObjectManager::CreateNewEmptyAnimation(string Name)
     Frames.emplace_back();
     FrameWidths.emplace_back();
     FrameHeights.emplace_back();
+    AnimFrameCounts.push_back(0);
 }
 
 void ObjectManager::AddFramesToAnimation(string Name, vector<Texture2D>& TFrames)
@@ -24,6 +25,7 @@ void ObjectManager::AddFramesToAnimation(string Name, vector<Texture2D>& TFrames
     // Helpers
     vector<uint32_t>& Widths = FrameWidths[AnimIdx];
     vector<uint32_t>& Heights = FrameHeights[AnimIdx];
+    uint32_t& AnimSize = AnimFrameCounts[AnimIdx];
 
     // Loop through frames
     for(auto& Frame : TFrames)
@@ -32,6 +34,8 @@ void ObjectManager::AddFramesToAnimation(string Name, vector<Texture2D>& TFrames
         Widths.push_back(Frame.width);
         Heights.push_back(Frame.height);
     }
+
+    AnimSize += TFrames.size();
 }
 
 void ObjectManager::CreateAnimation(string Name, vector<Texture2D>& TFrames)
@@ -54,4 +58,6 @@ void ObjectManager::CreateAnimation(string Name, vector<Texture2D>& TFrames)
         Widths.push_back(Frame.width);
         Heights.push_back(Frame.height);
     }
+
+    AnimFrameCounts.push_back(TFrames.size());
 }
