@@ -33,7 +33,7 @@ Here you'll see how the engine is structured, how to use it, and cool features i
 
 ## Support / Contributing
 
-If you want to offer support, hang out, contribute and get announcements when a new update gets posted, join the [discord server](https://discord.gg/n5Mp93Nqd)!
+If you want to offer support, hang out, contribute and get announcements when a new update gets posted, join the [discord server](https://discord.gg/kdzdDNvxdg)!
 You can also reach out to **@Hammykat** on discord!
 
 In the server:
