@@ -74,5 +74,5 @@ And any other place you think you could help.
 | **Compiler**         | MSVC, GCC, or Clang               |
 
 ### Licensing
-This project is protected under the zlib license
+This project is protected under the zlib license.
 For more, [check here](LICENSE)
