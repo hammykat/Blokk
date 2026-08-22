@@ -7,19 +7,19 @@
 void ProcessVelocities_SIMD_AVX2(
     float* PosX, float* PosY, 
     const float* VelX, const float* VelY, 
-    size_t Size
+    uint32_t Size
 );
 
 void ProcessVelocities_SIMD_AVX512(
     float* PosX, float* PosY, 
     const float* VelX, const float* VelY, 
-    size_t Size
+    uint32_t Size
 );
 
 void ProcessVelocities_SIMD_SSE2(
     float* PosX, float* PosY, 
     const float* VelX, const float* VelY, 
-    size_t Size
+    uint32_t Size
 );
 
 // Update a range of positions
@@ -30,7 +30,7 @@ void ObjectManager::UpdateRangeOfPositions(IndexRange TRange, Worker* Thread)
     float *XVels = &XVelocities[TRange.Start];
     float *YVels = &YVelocities[TRange.Start];
 
-    size_t Size = TRange.GetSize();
+    uint32_t Size = TRange.GetSize();
     (this->*UpdatePositions)(XPos, YPos, XVels, YVels, Size);
 }
 
@@ -38,10 +38,10 @@ template <SIMDLevel Level>
 void ObjectManager::UpdatePositionsFn(
     float* PosX, float* PosY, 
     const float* VelX, const float *VelY, 
-    size_t Size
+    uint32_t Size
 ) {
     // 256 bit
-    if constexpr (Level == SIMDLevel::AVX || Level == SIMDLevel::AVX2)
+    if constexpr (Level == SIMDLevel::AVX2)
     {
         ProcessVelocities_SIMD_AVX2(PosX, PosY, VelX, VelY, Size);
     }
@@ -64,10 +64,10 @@ __attribute__((target("avx2")))
 void ProcessVelocities_SIMD_AVX2(
     float* PosX, float* PosY, 
     const float* VelX, const float* VelY, 
-    size_t Size
+    uint32_t Size
 ) {
     // Loop
-    size_t i = 0;
+    uint32_t i = 0;
     for(; i + 8 <= Size; i += 8)
     {
         // Positions
@@ -106,10 +106,10 @@ __attribute__((target("avx512f")))
 void ProcessVelocities_SIMD_AVX512(
     float* PosX, float* PosY, 
     const float* VelX, const float* VelY, 
-    size_t Size
+    uint32_t Size
 ) {
     // Loop
-    size_t i = 0;
+    uint32_t i = 0;
     for(; i + 16 <= Size; i += 16)
     {
         // Positions
@@ -148,10 +148,10 @@ __attribute__((target("sse2")))
 void ProcessVelocities_SIMD_SSE2(
     float* PosX, float* PosY, 
     const float* VelX, const float* VelY, 
-    size_t Size
+    uint32_t Size
 ) {
     // Loop
-    size_t i = 0;
+    uint32_t i = 0;
     for(; i + 4 <= Size; i += 4)
     {
         // Positions
