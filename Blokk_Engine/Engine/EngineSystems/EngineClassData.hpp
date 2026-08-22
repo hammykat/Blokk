@@ -11,6 +11,7 @@
 #include <condition_variable>
 #include <unordered_map>
 #include <atomic>
+#include <stdexcept>
 
 #include "GameTypes.hpp"
 #include "ObjectUpdateStructs.hpp"
@@ -22,9 +23,9 @@ class GameObject;
 using namespace std;
 
 struct IndexRange {
-    size_t Start, End;
+    uint32_t Start, End;
 
-    int GetSize()
+    uint32_t GetSize()
     {
         return End - Start;
     }
@@ -44,8 +45,20 @@ using CheckVisibleRangeFnPtr = void(ObjectManager::*)(
 using UpdatePositionsFnPtr = void(ObjectManager::*)(
     float* PosX, float* PosY, 
     const float* VelX, const float *VelY, 
-    size_t Size
+    uint32_t Size
 );
+
+enum BlokkCulling {
+    Axis,
+    Basic
+};
+
+struct ManagerCreation 
+{
+    BlokkCulling CullingType;
+    Vector2 ScreenDimensions;
+    uint32_t FPS = 30;
+};
 
 //  Object manager
 class ObjectManager 
@@ -54,12 +67,7 @@ class ObjectManager
 public:
     friend class GameObject;
 
-
-public:
-    SIMDLevel CoreCount;
-
-
-    ObjectManager(Vector2 ScreenDimensions, size_t FPS = 30) :
+    ObjectManager(ManagerCreation Cr) :
         
         // Threads
         ThreadOpenedPrevFrame(false),
@@ -70,7 +78,7 @@ public:
         PrevOpenedThreads(0),
 
         // Frames
-        FrameTime(1000.0 / FPS),
+        FrameTime(1000.0 / Cr.FPS),
         CurrentFrameTime(0),
         PrevFrameTime(0),
         TargetFrameTime(FrameTime * 0.8),
@@ -79,14 +87,38 @@ public:
         SIMDRegisterLevel(DetectSIMD()),
 
         // Screen
-        ScreenWidth(ScreenDimensions.x),
-        ScreenHeight(ScreenDimensions.y)
+        ScreenWidth(Cr.ScreenDimensions.x),
+        ScreenHeight(Cr.ScreenDimensions.y),
+
+        // Counts
+        ObjectCount(0),
+        StaticObjectCount(0),
+        DynamicObjectCount(0)
     {
+        // Throw an error if unsupported
+        if (SIMDRegisterLevel == SIMDLevel::Unsupported)
+        {
+            throw std::runtime_error(
+                "Blokk requires an x86 CPU with SSE2 support."
+            );
+        }
+
+        // Throw an error if no threads were found
+        if (ThreadCount == 0)
+        {
+            throw std::runtime_error(
+                "Blokk couldn't find the hardware thread count."
+            );
+        }
+
         // Open starting thread
         OpenThread();
         
         // Set the worker's manager
         Worker::Manager = this;
+
+        // Get the proper functions 
+        GetFunctions(Cr.CullingType);
     }
 
     void EngineProcess();
@@ -120,6 +152,7 @@ private:
     vector<vector<Texture2D>> Frames;
     vector<vector<uint32_t>> FrameWidths;
     vector<vector<uint32_t>> FrameHeights;
+    vector<uint32_t> AnimFrameCounts;
     
     // Visibility
     vector<uint32_t> AnimHeights;
@@ -165,43 +198,57 @@ private:
     // Functions -------------------------------------------------
 
     // Get the right function implementations according to the user's SIMD
-    void GetFunctions()
+    void GetFunctions(BlokkCulling CullType)
     {
         switch(SIMDRegisterLevel)
         {
             // 256 bit
-            case SIMDLevel::AVX:
             case SIMDLevel::AVX2:
-                CheckVisibleRange = CheckVisibilityFn<SIMDLevel::AVX>;
-                UpdatePositions = UpdatePositionsFn<SIMDLevel::AVX>;
+            
+                if (CullType == BlokkCulling::Basic) {
+                    CheckVisibleRange = CheckVisibilityFn_Basic<SIMDLevel::AVX2>;
+                } else if (CullType == BlokkCulling::Axis) {
+                    CheckVisibleRange = CheckVisibilityFn_Axis<SIMDLevel::AVX2>;
+                }
+
+                UpdatePositions = UpdatePositionsFn<SIMDLevel::AVX2>;
                 break;
             
             // 512 bit
             case SIMDLevel::AVX512:
-                CheckVisibleRange = CheckVisibilityFn<SIMDLevel::AVX512>;
+
+                if (CullType == BlokkCulling::Basic) {
+                    CheckVisibleRange = CheckVisibilityFn_Basic<SIMDLevel::AVX512>;
+                } else if (CullType == BlokkCulling::Axis) {
+                    CheckVisibleRange = CheckVisibilityFn_Axis<SIMDLevel::AVX512>;
+                }
                 UpdatePositions = UpdatePositionsFn<SIMDLevel::AVX512>;
                 break;
 
             // 128 bit - default
             default:
-                CheckVisibleRange = CheckVisibilityFn<SIMDLevel::SSE2>;
+                if (CullType == BlokkCulling::Basic) {
+                    CheckVisibleRange = CheckVisibilityFn_Basic<SIMDLevel::SSE2>;
+                } else if (CullType == BlokkCulling::Axis) {
+                    CheckVisibleRange = CheckVisibilityFn_Axis<SIMDLevel::SSE2>;
+                }
                 UpdatePositions = UpdatePositionsFn<SIMDLevel::SSE2>;
         }
     }
 
     // Split a number into x ranges
-    vector<IndexRange> GetRanges(size_t Length, size_t Count)
+    vector<IndexRange> GetRanges(uint32_t Length, uint32_t Count)
     {
         if(Count == 0 || Length == 0) return {};
-        size_t Size = Length / Count;
+        uint32_t Size = Length / Count;
 
         vector<IndexRange> Result;
         Result.reserve(Count);
 
-        for(size_t i = 0; i < Count; i++)
+        for(uint32_t i = 0; i < Count; i++)
         {
-            size_t Start = i * Size;
-            size_t End = (i == Count - 1)? Length : (i + 1) * Size;
+            uint32_t Start = i * Size;
+            uint32_t End = (i == Count - 1)? Length : (i + 1) * Size;
             Result.push_back(
                 IndexRange{Start, End}
             );
@@ -258,7 +305,7 @@ private:
             // Set function
             Worker::CurrentJob = UpdateRangeOfPositions;
             // Loop through
-            for(size_t i = 0; i < OpenedThreads; i++)
+            for(uint32_t i = 0; i < OpenedThreads; i++)
             {
                 // Give it a range
                 Workers[i]->SetRange(VelRanges[i]);
@@ -283,7 +330,7 @@ private:
                 // Set function
                 Worker::CurrentJob = CheckVisibleRange;
                 // Loop through
-                for(size_t i = 0; i < OpenedThreads; i++)
+                for(uint32_t i = 0; i < OpenedThreads; i++)
                 {
                     // Give it a range
                     Workers[i]->SetRange(VisRanges[i]);
@@ -337,7 +384,7 @@ private:
     void UpdatePositionsFn(
         float* PosX, float* PosY, 
         const float* VelX, const float *VelY, 
-        size_t Size
+        uint32_t Size
     );
 
     // Rendering --------------------------------------------------------
@@ -346,7 +393,12 @@ private:
     {
         for(auto Idx : RenderObjectIdxs)
         {
-            uint32_t Frame = FrameNums[Idx];
+            uint32_t FrameCount = AnimFrameCounts[Idx];
+
+            if (FrameCount == 0)
+                continue;
+            
+            uint32_t Frame = FrameNums[Idx] % FrameCount;
             uint32_t Anim = AnimNums[Idx];
 
             Texture2D Texture = Frames[Anim][Frame];
@@ -358,7 +410,10 @@ private:
     // Visibility checks --------------------------------------
 
     template <SIMDLevel Level>
-    void CheckVisibilityFn(IndexRange Range, Worker* Thread);
+    void CheckVisibilityFn_Basic(IndexRange Range, Worker* Thread);
+
+    template <SIMDLevel Level>
+    void CheckVisibilityFn_Axis(IndexRange Range, Worker* Thread);
 
     CheckVisibleRangeFnPtr CheckVisibleRange;
 
