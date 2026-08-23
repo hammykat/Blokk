@@ -2,6 +2,13 @@
 
 There are currently 2 culling systems that you can choose the engine to use for rendering:
 
+```cpp
+enum BlokkCulling {
+    Axis,
+    Basic
+};
+```
+
 ## 1. Basic Culling
 
 Here, the engine compares every object's x and y to check if they are in the screen.
