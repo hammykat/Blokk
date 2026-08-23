@@ -33,7 +33,8 @@ Here you'll see how the engine is structured, how to use it, and cool features i
 
 ## Support / Contributing
 
-If you want to offer support, hang out, contribute and get announcements when a new update gets posted, join the [discord server](https://discord.gg/58zz4ZZbZ)!
+If you want to offer support, hang out, contribute and get announcements when a new update gets posted, join the [discord server](https://discord.gg/n5Mp93Nqd)!
+You can also reach out to **@Hammykat** on discord!
 
 In the server:
 
@@ -55,6 +56,23 @@ You can contribute in many ways, such as:
 
 And any other place you think you could help.
 
+## Required specs
+
+| Component            | Minimum                           |
+| -------------------- | --------------------------------- |
+| **CPU architecture** | x86 / x86-64                      |
+| **SIMD**             | **SSE2**                          |
+| **AVX**              | Not required                      |
+| **AVX2**             | Not required                      |
+| **AVX-512**          | Not required                      |
+| **NEON/ARM**         | Not currently supported           |
+| **OS**               | Windows / Linux / macOS*          |
+| **RAM**              | No hard minimum established yet   |
+| **GPU**              | OpenGL-capable GPU through Raylib |
+| **C++**              | C++20                             |
+| **Build system**     | CMake                             |
+| **Compiler**         | MSVC, GCC, or Clang               |
+
 ### Licensing
-This project is protected under the zlib license
+This project is protected under the zlib license.
 For more, [check here](LICENSE)
