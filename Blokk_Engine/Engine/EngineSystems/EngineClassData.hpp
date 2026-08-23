@@ -162,7 +162,7 @@ public:
         return ThreadCount;
     }
 
-    double GetPrevFrameExecutionTime() {
+    double GetFrameExecutionTime() {
         return FrameExecutionTime;
     }
 
