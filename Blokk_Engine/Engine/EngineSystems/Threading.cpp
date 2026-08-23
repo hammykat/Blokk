@@ -3,7 +3,7 @@
 // Main function
 void ObjectManager::EngineProcess() 
 {
-    CurrentFrameTime = TimeEngineProcesses();
+    FrameExecutionTime = TimeEngineProcesses();
     
     if(!OptimalThreadCountReached)
     {
@@ -15,7 +15,7 @@ void ObjectManager::EngineProcess()
         if(ThreadOpenedPrevFrame)
         {
             // If took longer than previous frame
-            if(CurrentFrameTime > PrevFrameTime)
+            if(FrameExecutionTime > PrevFrameTime)
             {
                 // Destroy a thread
                 DestroyThread();
@@ -25,7 +25,7 @@ void ObjectManager::EngineProcess()
                 ThreadOpenedPrevFrame = false;
             }
             // If took too long
-            else if(CurrentFrameTime > TargetFrameTime)
+            else if(FrameExecutionTime > TargetExecutionTime)
             {
                 // Open another thread
                 OpenThread();
@@ -37,7 +37,7 @@ void ObjectManager::EngineProcess()
         else // If a thread wasn't opened the previous frame
         {
             // If it took too long
-            if(CurrentFrameTime > TargetFrameTime)
+            if(FrameExecutionTime > TargetExecutionTime)
             {
                 // Open another thread
                 OpenThread();
@@ -48,6 +48,6 @@ void ObjectManager::EngineProcess()
         }
         }
 
-        PrevFrameTime = CurrentFrameTime;
+        PrevFrameTime = FrameExecutionTime;
     }
 }

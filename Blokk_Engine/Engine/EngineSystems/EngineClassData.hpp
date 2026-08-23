@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <atomic>
 #include <stdexcept>
+#include <iostream>
 
 #include "GameTypes.hpp"
 #include "ObjectUpdateStructs.hpp"
@@ -48,9 +49,16 @@ using UpdatePositionsFnPtr = void(ObjectManager::*)(
     uint32_t Size
 );
 
+using TimeEngineProcessesFnPtr = double(ObjectManager::*)();
+
 enum BlokkCulling {
     Axis,
     Basic
+};
+
+struct EngineDiagnostics 
+{
+    uint32_t TotalThreadCount, OpenedThreadCount;
 };
 
 struct ManagerCreation 
@@ -58,6 +66,7 @@ struct ManagerCreation
     BlokkCulling CullingType;
     Vector2 ScreenDimensions;
     uint32_t FPS = 30;
+    bool Debug = false;
 };
 
 //  Object manager
@@ -78,10 +87,18 @@ public:
         PrevOpenedThreads(0),
 
         // Frames
+        FPS(Cr.FPS),
         FrameTime(1000.0 / Cr.FPS),
-        CurrentFrameTime(0),
+        FrameExecutionTime(0),
         PrevFrameTime(0),
-        TargetFrameTime(FrameTime * 0.8),
+        TargetExecutionTime(FrameTime * 0.8),
+
+        // Timing
+        UserUpdateTime(0),
+        VelocityTime(0),
+        AnimationIncrementTime(0),
+        VisibilityCullingTime(0),
+        RenderTime(0),
 
         // SIMD
         SIMDRegisterLevel(DetectSIMD()),
@@ -118,11 +135,146 @@ public:
         Worker::Manager = this;
 
         // Get the proper functions 
-        GetFunctions(Cr.CullingType);
+        GetFunctions(Cr.CullingType, Cr.Debug);
     }
 
     void EngineProcess();
 
+    // Debugging / Stats -----------------------------------
+
+    uint32_t GetTotalObjects() {
+        return ObjectCount;
+    }
+
+    uint32_t GetStaticObjectCount() {
+        return StaticObjectCount;
+    }
+    
+    uint32_t GetDynamicObjectCount() {
+        return DynamicObjectCount;
+    }
+
+    uint32_t GetOpenedThreads() {
+        return OpenedThreads;
+    }
+
+    uint32_t GetTotalThreads() {
+        return ThreadCount;
+    }
+
+    double GetPrevFrameExecutionTime() {
+        return FrameExecutionTime;
+    }
+
+    double GetTargetExecutionTime() {
+        return TargetExecutionTime;
+    }
+
+    uint32_t GetFPS() {
+        return FPS;
+    }
+
+    double GetUserUpdateTime() const {
+        return UserUpdateTime;
+    }
+
+    double GetVelocityTime() const {
+        return VelocityTime;
+    }
+
+    double GetAnimationIncrementTime() const {
+        return AnimationIncrementTime;
+    }
+
+    double GetVisibilityCullingTime() const {
+        return VisibilityCullingTime;
+    }
+
+    double GetRenderTime() const {
+        return RenderTime;
+    }
+
+    void SetTargetExecutionTime(double Time) 
+    {
+        // Make sure time isn't negative
+        if(Time <= 0) {
+            throw std::invalid_argument("Blokk error: Tried to set frame time to negative value or 0.");
+        }
+
+        // Set
+        TargetExecutionTime = Time;
+    }
+
+    uint32_t GetSIMDRegisterSize() {
+        switch(SIMDRegisterLevel)
+        {
+            case SIMDLevel::AVX2:
+                return 256;
+
+            case SIMDLevel::AVX512:
+                return 512;
+            
+            case SIMDLevel::SSE2:
+                return 128;
+
+            default:
+                return 0;
+        }
+    }
+
+    string GetSIMDRegisterType()
+    {
+        switch(SIMDRegisterLevel)
+        {
+            case SIMDLevel::AVX2:
+                return "avx2";
+
+            case SIMDLevel::AVX512:
+                return "avx512";
+            
+            case SIMDLevel::SSE2:
+                return "sse2";
+
+            default:
+                return "unknown";
+        }
+    }
+
+    void PrintDiagnostics() 
+    {
+        std::cout << "BLOKK Diagnostics report ==============" << "\n\n";
+
+        std::cout << "Frames ---------------" << '\n';
+        std::cout << "FPS: " << FPS << '\n';
+        std::cout << "Total frame time: " << FrameTime << '\n';
+        std::cout << "FrameExecutionTime: " << FrameExecutionTime << '\n';
+        std::cout << "TargetExecutionTime: " << TargetExecutionTime << "\n\n";
+
+        std::cout << "Threads ---------------" << '\n';
+        std::cout << "Opened Threads: " << OpenedThreads << '\n';
+        std::cout << "Total Threads: " << ThreadCount << '\n';
+        std::cout << "Optimal thread count reached: " << (OptimalThreadCountReached? "true" : "false") << "\n\n";
+
+        std::cout << "Object Counts ---------------" << '\n';
+        std::cout << "Total object count: " << ObjectCount << '\n';
+        std::cout << "Dynamic object count: " << DynamicObjectCount << '\n';
+        std::cout << "Static object count: " << StaticObjectCount << "\n\n";
+
+        std::cout << "SIMD Register ---------------" << '\n';
+        std::cout << "SIMD register type: " << GetSIMDRegisterType() << '\n';
+        std::cout << "SIMD register size: " << GetSIMDRegisterSize() << " bits" << '\n';
+
+        std::cout << "System timing ---------------" << '\n';
+        std::cout << "User update processing: " << UserUpdateTime << '\n';
+        std::cout << "Updating positions with velocities: " << VelocityTime << '\n';
+        std::cout << "Animation frame# incrementing: " << AnimationIncrementTime << '\n';
+        std::cout << "Visibility culling: " << VisibilityCullingTime << '\n';
+        std::cout << "Rendering: " << RenderTime << '\n';
+
+        std::cout << "END ==================================" << '\n';
+    }
+
+// PRIVATE -------------------------------------------
 private:
 
     SIMDLevel SIMDRegisterLevel;
@@ -184,11 +336,18 @@ private:
     bool ThreadDestroyedPrevFrame;
     bool OptimalThreadCountReached;
 
-    double CurrentFrameTime;
+    double FrameExecutionTime;
     double PrevFrameTime;
-    double TargetFrameTime;
+    double TargetExecutionTime;
     double FrameTime;
+    uint32_t FPS;
     vector<unique_ptr<Worker>> Workers;
+
+    double UserUpdateTime;
+    double VelocityTime;
+    double AnimationIncrementTime;
+    double VisibilityCullingTime;
+    double RenderTime;
     
     // Counts
     uint32_t ObjectCount;
@@ -198,7 +357,7 @@ private:
     // Functions -------------------------------------------------
 
     // Get the right function implementations according to the user's SIMD
-    void GetFunctions(BlokkCulling CullType)
+    void GetFunctions(BlokkCulling CullType, bool Debug)
     {
         switch(SIMDRegisterLevel)
         {
@@ -234,6 +393,13 @@ private:
                 }
                 UpdatePositions = UpdatePositionsFn<SIMDLevel::SSE2>;
         }
+
+        // Debug or not?
+        if(Debug) {
+            TimeEngineProcesses = TimeEngineProcessesFn<true>;
+        } else {
+            TimeEngineProcesses = TimeEngineProcessesFn<false>;
+        }   
     }
 
     // Split a number into x ranges
@@ -273,15 +439,23 @@ private:
         OpenedThreads--;
     }
 
+    // Time engine processes -------------------------------------------------
+
+    TimeEngineProcessesFnPtr TimeEngineProcesses;
+
     // Do the engine processes and time it
-    double TimeEngineProcesses()
+    template<bool Debug>
+    double TimeEngineProcessesFn()
     {
         // Get the start time
-        auto StartTime = chrono::steady_clock::now();
+        auto TotalStartTime = chrono::steady_clock::now();
 
         // EngineProcesses-------------------------------------
 
         { // User updates
+
+            if constexpr (Debug) // Start time
+                auto StartTime = chrono::steady_clock::now();
             
             // Process single update commands
             while(!FieldUpdateCommands.empty())
@@ -296,9 +470,22 @@ private:
                 // Process front command
                 ProcessDoubleUpdateCommand(DoubleFieldUpdateCommands.front());
             }
+
+            if constexpr (Debug) 
+            {
+                // End time
+                auto EndTime = chrono::steady_clock::now();
+
+                // Calculate total time
+                UserUpdateTime = chrono::duration<double, milli>(EndTime - StartTime).count();
+            }
         }
 
+
         { // Velocities 
+
+            if constexpr (Debug) // Start time
+                auto StartTime = chrono::steady_clock::now();
 
             // Get ranges
             vector<IndexRange> VelRanges = GetRanges(DynamicObjectCount, OpenedThreads);
@@ -314,17 +501,42 @@ private:
             for (auto& Worker : Workers) {
                 Worker->WaitUntilFinished();
             }
+
+            if constexpr (Debug) 
+            {
+                // End time
+                auto EndTime = chrono::steady_clock::now();
+
+                // Calculate total time
+                VelocityTime = chrono::duration<double, milli>(EndTime - StartTime).count();
+            }
         } 
 
         { // Animations
 
             { // Incrementing
+
+                if constexpr (Debug) // Start time
+                    auto StartTime = chrono::steady_clock::now();
                 
                 // Let the main thread increment
                 IncrementFrames(FrameNums);
+
+                if constexpr (Debug) 
+                {
+                    // End time
+                    auto EndTime = chrono::steady_clock::now();
+
+                    // Calculate total time
+                    AnimationIncrementTime = chrono::duration<double, milli>(EndTime - StartTime).count();
+                }
             }
 
             { // Visibility checks
+
+                if constexpr (Debug) // Start time
+                    auto StartTime = chrono::steady_clock::now();
+
                 // Get ranges
                 vector<IndexRange> VisRanges = GetRanges(ObjectCount, OpenedThreads);
                 // Set function
@@ -354,19 +566,41 @@ private:
                         Worker->IdxResult.end()
                     );
                 }
+
+                if constexpr (Debug) 
+                {
+                    // End time
+                    auto EndTime = chrono::steady_clock::now();
+
+                    // Calculate total time
+                    VisibilityCullingTime = chrono::duration<double, milli>(EndTime - StartTime).count();
+                }
             }
         }
 
         { // Render
+
+            if constexpr (Debug) // Start time
+                auto StartTime = chrono::steady_clock::now();
+
             RenderObjects();
+
+            if constexpr (Debug) 
+            {
+                // End time
+                auto EndTime = chrono::steady_clock::now();
+
+                // Calculate total time
+                RenderTime = chrono::duration<double, milli>(EndTime - StartTime).count();
+            }
         }
 
 
         // Get the end time
-        auto EndTime = chrono::steady_clock::now();
+        auto TotalEndTime = chrono::steady_clock::now();
 
         // Get the total time
-        auto TotalTime = chrono::duration<double, milli>(EndTime - StartTime).count();
+        auto TotalTime = chrono::duration<double, milli>(TotalEndTime - TotalStartTime).count();
 
         // Return
         return TotalTime;
@@ -438,5 +672,4 @@ private:
     void CreateAnimation(string Name, vector<Texture2D>& Frames);
 
     void AddFramesToAnimation(string Name, vector<Texture2D>& Frames);
-
 };
