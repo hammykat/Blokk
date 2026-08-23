@@ -12,5 +12,7 @@ struct ManagerCreation
 };
 ```
 
+Then, use a basic raylib loop, and inside, use the `EngineProcess();` member function of `ObjectManager` to let the engine handle all the objects.
+
 For the CullingType, [check here](RenderCullingSystems.md) for more info.
 For the Debug, [check here](EngineDiagnostics.md) for more info.
