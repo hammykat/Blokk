@@ -139,24 +139,6 @@ double ObjectManager::TimeEngineProcesses()
         }
     }
 
-    { // Render
-
-        #ifdef Blokk_Diagnostics // Start time
-            auto StartTime = chrono::steady_clock::now();
-        #endif
-
-        RenderObjects();
-
-        #ifdef Blokk_Diagnostics
-            // End time
-            auto EndTime = chrono::steady_clock::now();
-
-            // Calculate total time
-            RenderTime = chrono::duration<double, milli>(EndTime - StartTime).count();
-        #endif
-    }
-
-
     // Get the end time
     auto TotalEndTime = chrono::steady_clock::now();
 
@@ -164,6 +146,26 @@ double ObjectManager::TimeEngineProcesses()
     auto TotalTime = chrono::duration<double, milli>(TotalEndTime - TotalStartTime).count();
 
     // Return
+    return TotalTime;
+}
+
+double ObjectManager::TimeRenderObjects()
+{
+    // Start time
+    auto StartTime = chrono::steady_clock::now();
+
+    RenderObjects();
+
+    // End time
+    auto EndTime = chrono::steady_clock::now();
+
+    // Calculate total time
+    auto TotalTime = chrono::duration<double, milli>(EndTime - StartTime).count();
+
+    #ifdef Blokk_Diagnostics
+        RenderTime = TotalTime;
+    #endif
+
     return TotalTime;
 }
 

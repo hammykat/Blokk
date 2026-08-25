@@ -68,11 +68,8 @@ struct EngineDiagnostics
 
 struct ManagerCreation 
 {
-    BlokkCulling CullingType;
     Vector2 ScreenDimensions;
     uint32_t FPS = 30;
-    bool Debug = false;
-    bool CameraEnabled = false;
 };
 
 //  Object manager
@@ -231,7 +228,7 @@ public:
         }
     }
 
-    string GetSIMDRegisterType()
+    std::string GetSIMDRegisterType()
     {
         switch(SIMDRegisterLevel)
         {
@@ -513,6 +510,8 @@ private:
     #endif
 
     // Rendering --------------------------------------------------------
+
+    double TimeRenderObjects();
 
     void RenderObjects()
     {
