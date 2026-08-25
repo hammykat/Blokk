@@ -22,9 +22,6 @@ int main()
     };
     ObjectManager MyManager(MCr); // New instance
 
-
-    // Here, perform all your tasks for the 
-
     // raylib loop
     while(!WindowShouldClose())
     {
