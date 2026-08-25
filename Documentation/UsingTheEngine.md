@@ -24,7 +24,7 @@ The 2 most important functions are:
 * `EngineProcesses();` - Use to let the engien update all the data
 
 Using the engine has the same basic structure as a raylib project. 
-Here's an example template (You can also find it [here](ExampleProjects/Template.cpp)):
+Here's an example template (You can also find it [here](../Example%20Projects/Template.cpp)):
 
 ```cpp
 /*
