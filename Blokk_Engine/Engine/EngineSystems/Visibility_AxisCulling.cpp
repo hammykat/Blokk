@@ -3,8 +3,9 @@
 
 #include "EngineClassData.hpp"
 
-// Forward declarations
+#if (Blokk_Visibility_CullType == 1)
 
+// Forward declarations
 vector<uint32_t> CheckVisible_Axis_SIMD_AVX2(
     uint32_t ScreenWidth,
     uint32_t ScreenHeight,
@@ -428,3 +429,5 @@ vector<uint32_t> CheckVisible_AxisY_SIMD_AVX512(
 
     return ResultIdx;
 }
+
+#endif

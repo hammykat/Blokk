@@ -14,6 +14,11 @@
 #include <stdexcept>
 #include <iostream>
 
+// Get correct default values
+#ifndef Blokk_Visibility_CullType
+    #define Blokk_Visibility_CullType 1 // Axis culling 
+#endif
+
 #include "GameTypes.hpp"
 #include "ObjectUpdateStructs.hpp"
 #include "SIMD_Finder.hpp"
@@ -67,6 +72,7 @@ struct ManagerCreation
     Vector2 ScreenDimensions;
     uint32_t FPS = 30;
     bool Debug = false;
+    bool CameraEnabled = false;
 };
 
 //  Object manager
@@ -93,12 +99,14 @@ public:
         PrevFrameTime(0),
         TargetExecutionTime(FrameTime * 0.8),
 
-        // Timing
+        // Diagnostics timing
+        #ifdef Blokk_Diagnostics
         UserUpdateTime(0),
         VelocityTime(0),
         AnimationIncrementTime(0),
         VisibilityCullingTime(0),
         RenderTime(0),
+        #endif
 
         // SIMD
         SIMDRegisterLevel(DetectSIMD()),
@@ -135,12 +143,13 @@ public:
         Worker::Manager = this;
 
         // Get the proper functions 
-        GetFunctions(Cr.CullingType, Cr.Debug);
+        GetFunctions();
     }
 
     void EngineProcess();
 
-    // Debugging / Stats -----------------------------------
+    // Diagnostics -----------------------------------
+    #ifdef Blokk_Diagnostics
 
     uint32_t GetTotalObjects() {
         return ObjectCount;
@@ -274,12 +283,49 @@ public:
         std::cout << "END ==================================" << '\n';
     }
 
+    #endif
+
+    // Camera functions
+    #ifdef Blokk_CamEnabled
+    class Camera {
+        void SetPosition(int32_t X, int32_t Y)
+        {
+            CameraPosition.x = X;
+            CameraPosition.y = Y;
+        }
+
+        void SetPosition(Vector2 Pos)
+        {
+            CameraPosition = Pos;
+        }
+
+        void SetXPosition(int32_t X) {
+            CameraPosition.x = X;
+        }
+
+        void SetYPosition(int32_t Y) {
+            CameraPosition.y = Y;
+        }
+
+        
+        void ChangeYPosition(int32_t Y) {
+            CameraPosition += Y;
+        }
+    }
+    #endif
+
 // PRIVATE -------------------------------------------
 private:
 
     SIMDLevel SIMDRegisterLevel;
     uint32_t ScreenHeight;
     uint32_t ScreenWidth;
+
+    // Camera
+    #ifdef Blokk_CamEnabled
+    Vector2 CameraPosition;
+    Vector2 CameraVelocity;
+    #endif
 
     // Positions
     vector<float> XPositions;
@@ -343,11 +389,13 @@ private:
     uint32_t FPS;
     vector<unique_ptr<Worker>> Workers;
 
+    #ifdef Blokk_Diagnostics
     double UserUpdateTime;
     double VelocityTime;
     double AnimationIncrementTime;
     double VisibilityCullingTime;
     double RenderTime;
+    #endif
     
     // Counts
     uint32_t ObjectCount;
@@ -357,18 +405,18 @@ private:
     // Functions -------------------------------------------------
 
     // Get the right function implementations according to the user's SIMD
-    void GetFunctions(BlokkCulling CullType, bool Debug)
+    void GetFunctions()
     {
         switch(SIMDRegisterLevel)
         {
             // 256 bit
             case SIMDLevel::AVX2:
-            
-                if (CullType == BlokkCulling::Basic) {
+
+                #if (Blokk_Visibility_CullType == 0)
                     CheckVisibleRange = CheckVisibilityFn_Basic<SIMDLevel::AVX2>;
-                } else if (CullType == BlokkCulling::Axis) {
+                #elif (Blokk_Visibility_CullType == 1)
                     CheckVisibleRange = CheckVisibilityFn_Axis<SIMDLevel::AVX2>;
-                }
+                #endif
 
                 UpdatePositions = UpdatePositionsFn<SIMDLevel::AVX2>;
                 break;
@@ -376,30 +424,26 @@ private:
             // 512 bit
             case SIMDLevel::AVX512:
 
-                if (CullType == BlokkCulling::Basic) {
+                #if (Blokk_Visibility_CullType == 0)
                     CheckVisibleRange = CheckVisibilityFn_Basic<SIMDLevel::AVX512>;
-                } else if (CullType == BlokkCulling::Axis) {
+                #elif (Blokk_Visibility_CullType == 1)
                     CheckVisibleRange = CheckVisibilityFn_Axis<SIMDLevel::AVX512>;
-                }
+                #endif
+
                 UpdatePositions = UpdatePositionsFn<SIMDLevel::AVX512>;
                 break;
 
             // 128 bit - default
             default:
-                if (CullType == BlokkCulling::Basic) {
+                #if (Blokk_Visibility_CullType == 0)
                     CheckVisibleRange = CheckVisibilityFn_Basic<SIMDLevel::SSE2>;
-                } else if (CullType == BlokkCulling::Axis) {
+                #elif (Blokk_Visibility_CullType == 1)
                     CheckVisibleRange = CheckVisibilityFn_Axis<SIMDLevel::SSE2>;
-                }
+                #endif
+                
                 UpdatePositions = UpdatePositionsFn<SIMDLevel::SSE2>;
         }
 
-        // Debug or not?
-        if(Debug) {
-            TimeEngineProcesses = TimeEngineProcessesFn<true>;
-        } else {
-            TimeEngineProcesses = TimeEngineProcessesFn<false>;
-        }   
     }
 
     // Split a number into x ranges
@@ -441,171 +485,9 @@ private:
 
     // Time engine processes -------------------------------------------------
 
-    TimeEngineProcessesFnPtr TimeEngineProcesses;
+    double TimeEngineProcesses();
 
     // Do the engine processes and time it
-    template<bool Debug>
-    double TimeEngineProcessesFn()
-    {
-        // Get the start time
-        auto TotalStartTime = chrono::steady_clock::now();
-
-        // EngineProcesses-------------------------------------
-
-        { // User updates
-
-            if constexpr (Debug) // Start time
-                auto StartTime = chrono::steady_clock::now();
-            
-            // Process single update commands
-            while(!FieldUpdateCommands.empty())
-            {
-                // Process front command
-                ProcessFieldUpdateCommand(FieldUpdateCommands.front());
-            }
-
-            // Process double update commands
-            while(!DoubleFieldUpdateCommands.empty())
-            {
-                // Process front command
-                ProcessDoubleUpdateCommand(DoubleFieldUpdateCommands.front());
-            }
-
-            if constexpr (Debug) 
-            {
-                // End time
-                auto EndTime = chrono::steady_clock::now();
-
-                // Calculate total time
-                UserUpdateTime = chrono::duration<double, milli>(EndTime - StartTime).count();
-            }
-        }
-
-
-        { // Velocities 
-
-            if constexpr (Debug) // Start time
-                auto StartTime = chrono::steady_clock::now();
-
-            // Get ranges
-            vector<IndexRange> VelRanges = GetRanges(DynamicObjectCount, OpenedThreads);
-            // Set function
-            Worker::CurrentJob = UpdateRangeOfPositions;
-            // Loop through
-            for(uint32_t i = 0; i < OpenedThreads; i++)
-            {
-                // Give it a range
-                Workers[i]->SetRange(VelRanges[i]);
-            }
-            // Wait for each to finish
-            for (auto& Worker : Workers) {
-                Worker->WaitUntilFinished();
-            }
-
-            if constexpr (Debug) 
-            {
-                // End time
-                auto EndTime = chrono::steady_clock::now();
-
-                // Calculate total time
-                VelocityTime = chrono::duration<double, milli>(EndTime - StartTime).count();
-            }
-        } 
-
-        { // Animations
-
-            { // Incrementing
-
-                if constexpr (Debug) // Start time
-                    auto StartTime = chrono::steady_clock::now();
-                
-                // Let the main thread increment
-                IncrementFrames(FrameNums);
-
-                if constexpr (Debug) 
-                {
-                    // End time
-                    auto EndTime = chrono::steady_clock::now();
-
-                    // Calculate total time
-                    AnimationIncrementTime = chrono::duration<double, milli>(EndTime - StartTime).count();
-                }
-            }
-
-            { // Visibility checks
-
-                if constexpr (Debug) // Start time
-                    auto StartTime = chrono::steady_clock::now();
-
-                // Get ranges
-                vector<IndexRange> VisRanges = GetRanges(ObjectCount, OpenedThreads);
-                // Set function
-                Worker::CurrentJob = CheckVisibleRange;
-                // Loop through
-                for(uint32_t i = 0; i < OpenedThreads; i++)
-                {
-                    // Give it a range
-                    Workers[i]->SetRange(VisRanges[i]);
-                }
-
-                // Wait for each to finish
-                for (auto& Worker : Workers) {
-                    Worker->WaitUntilFinished();
-                }
-
-                // Clear idxs
-                RenderObjectIdxs.clear();
-
-                // Loop through workers
-                for (auto& Worker : Workers)
-                {
-                    // Get the idxs
-                    RenderObjectIdxs.insert(
-                        RenderObjectIdxs.end(),
-                        Worker->IdxResult.begin(),
-                        Worker->IdxResult.end()
-                    );
-                }
-
-                if constexpr (Debug) 
-                {
-                    // End time
-                    auto EndTime = chrono::steady_clock::now();
-
-                    // Calculate total time
-                    VisibilityCullingTime = chrono::duration<double, milli>(EndTime - StartTime).count();
-                }
-            }
-        }
-
-        { // Render
-
-            if constexpr (Debug) // Start time
-                auto StartTime = chrono::steady_clock::now();
-
-            RenderObjects();
-
-            if constexpr (Debug) 
-            {
-                // End time
-                auto EndTime = chrono::steady_clock::now();
-
-                // Calculate total time
-                RenderTime = chrono::duration<double, milli>(EndTime - StartTime).count();
-            }
-        }
-
-
-        // Get the end time
-        auto TotalEndTime = chrono::steady_clock::now();
-
-        // Get the total time
-        auto TotalTime = chrono::duration<double, milli>(TotalEndTime - TotalStartTime).count();
-
-        // Return
-        return TotalTime;
-    }
-
     void SwapObjects(uint32_t Obj1, uint32_t Obj2);
 
     // POSITIONS W/ VELS -------------------------------------------------------------------
@@ -620,6 +502,15 @@ private:
         const float* VelX, const float *VelY, 
         uint32_t Size
     );
+
+    // Camera
+    #ifdef Blokk_CamEnabled
+    void UpdateCamPosition()
+    {
+        CameraPosition.x += CameraVelocity.x;
+        CameraPosition.y += CameraVelocity.y;
+    }
+    #endif
 
     // Rendering --------------------------------------------------------
 
@@ -642,11 +533,13 @@ private:
 
     // Visibility checks --------------------------------------
 
-    template <SIMDLevel Level>
-    void CheckVisibilityFn_Basic(IndexRange Range, Worker* Thread);
-
-    template <SIMDLevel Level>
-    void CheckVisibilityFn_Axis(IndexRange Range, Worker* Thread);
+    #if (Blokk_Visibility_CullType == 0)
+        template <SIMDLevel Level>
+        void CheckVisibilityFn_Basic(IndexRange Range, Worker* Thread);
+    #elif (Blokk_Visibility_CullType == 1)
+        template <SIMDLevel Level>
+        void CheckVisibilityFn_Axis(IndexRange Range, Worker* Thread);
+    #endif
 
     CheckVisibleRangeFnPtr CheckVisibleRange;
 

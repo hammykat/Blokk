@@ -3,6 +3,8 @@
 
 #include "EngineClassData.hpp"
 
+#if (Blokk_Visibility_CullType == 0)
+
 // Forward declarations for SIMD helper functions
 vector<uint32_t> CheckVisible_SIMD_AVX2(
     uint32_t ScreenWidth, uint32_t ScreenHeight,
@@ -381,3 +383,5 @@ vector<uint32_t> CheckVisible_SIMD_AVX512(
 
     return ResultIdx;
 }
+
+#endif
