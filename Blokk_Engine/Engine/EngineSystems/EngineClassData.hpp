@@ -145,6 +145,27 @@ public:
 
     void EngineProcess();
 
+    // Rendering --------------------------------------------------------
+
+    double TimeRenderObjects();
+
+    void RenderObjects()
+    {
+        for(auto Idx : RenderObjectIdxs)
+        {
+            uint32_t Anim = AnimNums[Idx];
+            uint32_t FrameCount = AnimFrameCounts[Anim];
+
+            if (FrameCount == 0)
+                continue;
+
+            uint32_t Frame = FrameNums[Idx] % FrameCount;
+            Texture2D Texture = Frames[Anim][Frame];
+            
+            DrawTexture(Texture, XPositions[Idx], YPositions[Idx], WHITE);
+        }
+    }
+
     // Diagnostics -----------------------------------
     #ifdef Blokk_Diagnostics
 
@@ -508,27 +529,6 @@ private:
         CameraPosition.y += CameraVelocity.y;
     }
     #endif
-
-    // Rendering --------------------------------------------------------
-
-    double TimeRenderObjects();
-
-    void RenderObjects()
-    {
-        for(auto Idx : RenderObjectIdxs)
-        {
-            uint32_t Anim = AnimNums[Idx];
-            uint32_t FrameCount = AnimFrameCounts[Anim];
-
-            if (FrameCount == 0)
-                continue;
-
-            uint32_t Frame = FrameNums[Idx] % FrameCount;
-            Texture2D Texture = Frames[Anim][Frame];
-            
-            DrawTexture(Texture, XPositions[Idx], YPositions[Idx], WHITE);
-        }
-    }
 
     // Visibility checks --------------------------------------
 
