@@ -2,3 +2,4 @@
 
 #include "EngineClassData.hpp"
 #include "GameTypes.hpp"
+#include "GameObject.hpp"
