@@ -42,7 +42,7 @@ vector<uint32_t> CheckVisible_Axis_SIMD_SSE2(
 // ObjectManager Visibility Function
 
 template <SIMDLevel Level>
-void ObjectManager::CheckVisibilityFn_Axis(IndexRange Range, Worker* Thread) 
+void ObjectManager::CheckVisibilityFn_Axis(IndexRange Range, Worker* Thread)
 {
     // AVX / AVX2
     // 256-bit = 8 floats
@@ -131,6 +131,12 @@ vector<uint32_t> CheckVisible_Axis_SIMD_AVX2(
         float MinX = PosX[Idx];
         float MaxX = MinX + AnimWidths[Idx];
 
+        // Camera offsets
+        #ifdef Blokk_CamEnabled
+        MinX -= CameraX;
+        MaxX -= CameraX;
+        #endif
+
         if (MaxX > 0 && MinX < ScreenWidth) {
             Result.push_back(Idx);
         }
@@ -150,7 +156,13 @@ vector<uint32_t> CheckVisible_AxisY_SIMD_AVX2(
     uint32_t StartIdx
 ) {
     __m256 Zero = _mm256_set1_ps(0.0f);
-    __m256 ScrHeight = _mm256_set1_ps(static_cast<float>(ScreenHeight));
+    __m256 ScrHeight = _mm256_set1_ps(
+        static_cast<float>(ScreenHeight)
+    );
+
+    #ifdef Blokk_CamEnabled
+    __m256 CamY = _mm256_set1_ps(CameraY);
+    #endif
 
     vector<uint32_t> ResultIdx;
 
@@ -173,11 +185,25 @@ vector<uint32_t> CheckVisible_AxisY_SIMD_AVX2(
         // Max Y
         __m256 MaxYPos = _mm256_add_ps(MinYPos, Heights);
 
+        // Camera offsets
+        #ifdef Blokk_CamEnabled
+        MinYPos = _mm256_sub_ps(MinYPos, CamY);
+        MaxYPos = _mm256_sub_ps(MaxYPos, CamY);
+        #endif
+
         // MinY < ScreenHeight
-        __m256 YRes = _mm256_cmp_ps(MinYPos, ScrHeight, _CMP_LT_OQ);
+        __m256 YRes = _mm256_cmp_ps(
+            MinYPos,
+            ScrHeight,
+            _CMP_LT_OQ
+        );
 
         // MaxY > 0
-        __m256 YRes0 = _mm256_cmp_ps(MaxYPos, Zero, _CMP_GT_OQ);
+        __m256 YRes0 = _mm256_cmp_ps(
+            MaxYPos,
+            Zero,
+            _CMP_GT_OQ
+        );
 
         // Combine
         __m256 YResult = _mm256_and_ps(YRes, YRes0);
@@ -200,6 +226,11 @@ vector<uint32_t> CheckVisible_AxisY_SIMD_AVX2(
     for (; i < Size; ++i) {
         float YMin = PosY[i];
         float YMax = PosY[i] + AnimHeights[i];
+
+        #ifdef Blokk_CamEnabled
+        YMin -= CameraY;
+        YMax -= CameraY;
+        #endif
 
         if (YMax > 0 && YMin < ScreenHeight) {
             ResultIdx.push_back(StartIdx + i);
@@ -238,6 +269,12 @@ vector<uint32_t> CheckVisible_Axis_SIMD_SSE2(
         float MinX = PosX[Idx];
         float MaxX = MinX + AnimWidths[Idx];
 
+        // Camera offsets
+        #ifdef Blokk_CamEnabled
+        MinX -= CameraX;
+        MaxX -= CameraX;
+        #endif
+
         if (MaxX > 0 && MinX < ScreenWidth) {
             Result.push_back(Idx);
         }
@@ -257,7 +294,13 @@ vector<uint32_t> CheckVisible_AxisY_SIMD_SSE2(
     uint32_t StartIdx
 ) {
     __m128 Zero = _mm_set1_ps(0.0f);
-    __m128 ScrHeight = _mm_set1_ps(static_cast<float>(ScreenHeight));
+    __m128 ScrHeight = _mm_set1_ps(
+        static_cast<float>(ScreenHeight)
+    );
+
+    #ifdef Blokk_CamEnabled
+    __m128 CamY = _mm_set1_ps(CameraY);
+    #endif
 
     vector<uint32_t> ResultIdx;
 
@@ -280,11 +323,23 @@ vector<uint32_t> CheckVisible_AxisY_SIMD_SSE2(
         // Max Y
         __m128 MaxYPos = _mm_add_ps(MinYPos, Heights);
 
+        // Camera offsets
+        #ifdef Blokk_CamEnabled
+        MinYPos = _mm_sub_ps(MinYPos, CamY);
+        MaxYPos = _mm_sub_ps(MaxYPos, CamY);
+        #endif
+
         // MinY < ScreenHeight
-        __m128 YRes = _mm_cmplt_ps(MinYPos, ScrHeight);
+        __m128 YRes = _mm_cmplt_ps(
+            MinYPos,
+            ScrHeight
+        );
 
         // MaxY > 0
-        __m128 YRes0 = _mm_cmpgt_ps(MaxYPos, Zero);
+        __m128 YRes0 = _mm_cmpgt_ps(
+            MaxYPos,
+            Zero
+        );
 
         // Combine
         __m128 YResult = _mm_and_ps(YRes, YRes0);
@@ -307,6 +362,11 @@ vector<uint32_t> CheckVisible_AxisY_SIMD_SSE2(
     for (; i < Size; ++i) {
         float YMin = PosY[i];
         float YMax = PosY[i] + AnimHeights[i];
+
+        #ifdef Blokk_CamEnabled
+        YMin -= CameraY;
+        YMax -= CameraY;
+        #endif
 
         if (YMax > 0 && YMin < ScreenHeight) {
             ResultIdx.push_back(StartIdx + i);
@@ -332,20 +392,25 @@ vector<uint32_t> CheckVisible_Axis_SIMD_AVX512(
     vector<uint32_t> Result;
 
     // First cull against Y axis
-    vector<uint32_t> YAxisCulled = 
-    CheckVisible_AxisY_SIMD_AVX512(
-        ScreenHeight,
-        AnimHeights,
-        PosY,
-        Size,
-        StartIdx
-    );
+    vector<uint32_t> YAxisCulled =
+        CheckVisible_AxisY_SIMD_AVX512(
+            ScreenHeight,
+            AnimHeights,
+            PosY,
+            Size,
+            StartIdx
+        );
 
     // Then check X axis
-    for (uint32_t Idx : YAxisCulled) 
-    {
+    for (uint32_t Idx : YAxisCulled) {
         float MinX = PosX[Idx];
         float MaxX = MinX + AnimWidths[Idx];
+
+        // Camera offsets
+        #ifdef Blokk_CamEnabled
+        MinX -= CameraX;
+        MaxX -= CameraX;
+        #endif
 
         if (MaxX > 0 && MinX < ScreenWidth) {
             Result.push_back(Idx);
@@ -366,7 +431,13 @@ vector<uint32_t> CheckVisible_AxisY_SIMD_AVX512(
     uint32_t StartIdx
 ) {
     __m512 Zero = _mm512_set1_ps(0.0f);
-    __m512 ScrHeight = _mm512_set1_ps(static_cast<float>(ScreenHeight));
+    __m512 ScrHeight = _mm512_set1_ps(
+        static_cast<float>(ScreenHeight)
+    );
+
+    #ifdef Blokk_CamEnabled
+    __m512 CamY = _mm512_set1_ps(CameraY);
+    #endif
 
     vector<uint32_t> ResultIdx;
 
@@ -388,6 +459,12 @@ vector<uint32_t> CheckVisible_AxisY_SIMD_AVX512(
 
         // Max Y
         __m512 MaxYPos = _mm512_add_ps(MinYPos, Heights);
+
+        // Camera offsets
+        #ifdef Blokk_CamEnabled
+        MinYPos = _mm512_sub_ps(MinYPos, CamY);
+        MaxYPos = _mm512_sub_ps(MaxYPos, CamY);
+        #endif
 
         // MinY < ScreenHeight
         __mmask16 YRes = _mm512_cmp_ps_mask(
@@ -421,6 +498,11 @@ vector<uint32_t> CheckVisible_AxisY_SIMD_AVX512(
     for (; i < Size; ++i) {
         float YMin = PosY[i];
         float YMax = PosY[i] + AnimHeights[i];
+
+        #ifdef Blokk_CamEnabled
+        YMin -= CameraY;
+        YMax -= CameraY;
+        #endif
 
         if (YMax > 0 && YMin < ScreenHeight) {
             ResultIdx.push_back(StartIdx + i);
