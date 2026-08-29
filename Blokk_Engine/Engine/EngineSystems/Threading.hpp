@@ -8,7 +8,6 @@
 class ObjectManager;
 class Worker;
 
-using namespace std;
 
 using WorkerJobFunction =
     void (ObjectManager::*)(IndexRange, Worker*);
@@ -58,7 +57,7 @@ public:
 
     void SetRange(IndexRange Range)
     {
-        lock_guard<mutex> Lock(Mutex);
+        lock_guard<std::mutex> Lock(Mutex);
         TargetRange = Range;
         HasWork = true;
         Finished = false;
@@ -68,7 +67,7 @@ public:
 
     bool IsFinished()
     {
-        lock_guard<mutex> Lock(Mutex);
+        lock_guard<std::mutex> Lock(Mutex);
         return Finished;
     }
 
@@ -79,7 +78,7 @@ public:
 
     void Awake()
     {
-        Thread = thread(&Worker::Run, this);
+        Thread = std::thread(&Worker::Run, this);
     }
 
     void Stop()
@@ -103,7 +102,7 @@ public:
 
     inline static ObjectManager* Manager = nullptr;
     inline static WorkerJobFunction CurrentJob = nullptr;
-    atomic<bool> Running = true;
+    std::atomic<bool> Running = true;
 
     vector<uint32_t> IdxResult;
 
@@ -111,14 +110,11 @@ private:
 
     IndexRange TargetRange;
 
-    thread Thread;
+    std::thread Thread;
     bool HasWork = false;
     bool Finished = true;
     condition_variable FinishedCV;
 
-    mutex Mutex;
+    std::mutex Mutex;
     condition_variable CV;
 };
-
-// Engine threading -----------------------------------------------
-
