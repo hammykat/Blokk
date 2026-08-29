@@ -28,8 +28,6 @@ public:
     // Cache the update for faster updates
     queue<FieldUpdate<float>>& EngineUpdates;
     queue<DoubleFieldUpdate<float>>& EngineDoubleUpdates;
-    queue<FieldUpdate<bool>>& EngineBoolUpdates;
-    queue<FieldUpdate<uint32_t>>& EngineUIntUpdates;
     string CurrentAnim;
 
     // States
@@ -41,8 +39,6 @@ public:
     GameObject(ObjectCreationParams CP = {{0, 0}, {0, 0}}) :
         EngineUpdates(EngineObjects->FieldUpdateCommands),
         EngineDoubleUpdates(EngineObjects->DoubleFieldUpdateCommands),
-        EngineBoolUpdates(EngineObjects->BoolUpdates),
-        EngineUIntUpdates(EngineObjects->UIntUpdates),
         IsStatic(CP.Velocity.x == 0 && CP.Velocity.y == 0),
         EngineIdx(0),
         IsVisible(false)
