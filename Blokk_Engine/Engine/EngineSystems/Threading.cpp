@@ -1,12 +1,13 @@
 #include "EngineClassData.hpp"
+#include <sstream>
 
 
 double ObjectManager::TimeEngineProcesses()
 {
-    // Get the start time
+    // Get the total start time
     auto TotalStartTime = chrono::steady_clock::now();
 
-    // EngineProcesses-------------------------------------
+    // EngineProcesses-----------------------------------------
 
     // Camera
     #ifdef Blokk_CamEnabled
@@ -15,15 +16,24 @@ double ObjectManager::TimeEngineProcesses()
 
     { // User updates
 
-        #ifdef Blokk_Diagnostics // Start time
+        #ifdef Blokk_Diagnostics //F Start time
             auto StartTime = chrono::steady_clock::now();
         #endif
+
+        // Process object creation commands
+        while(!Creations.empty())
+        {
+            // Process front command
+            ProcessAddCommand(Creations.front());
+            Creations.pop();
+        }
         
         // Process single update commands
         while(!FieldUpdateCommands.empty())
         {
             // Process front command
             ProcessFieldUpdateCommand(FieldUpdateCommands.front());
+            FieldUpdateCommands.pop();
         }
 
         // Process double update commands
@@ -31,6 +41,7 @@ double ObjectManager::TimeEngineProcesses()
         {
             // Process front command
             ProcessDoubleUpdateCommand(DoubleFieldUpdateCommands.front());
+            DoubleFieldUpdateCommands.pop();
         }
 
         #ifdef Blokk_Diagnostics
@@ -198,7 +209,7 @@ void ObjectManager::EngineProcess()
             else if(FrameExecutionTime > TargetExecutionTime)
             {
                 // Open another thread
-                OpenThread();
+                OpenThread(); // 
 
                 // Update var
                 ThreadOpenedPrevFrame = true;
