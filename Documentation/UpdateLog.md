@@ -1,3 +1,29 @@
+## V0.1.4
+> 8/28/2026
+
+* Cleaned up several parts of the engine code and removed unused update queues.
+
+### Added:
+
+* Camera support with X and Y movement.
+* Camera-aware visibility culling across SSE2, AVX2, and AVX-512.
+
+### Fixed:
+
+* Object creation and destruction.
+* Queued update commands not being removed after processing.
+
+### Improved:
+
+* Handling of static and dynamic objects when creating, destroying, and swapping them.
+* Some diagnostics getters and general code consistency.
+
+### Summary
+This update mainly focuses on making object management more reliable while laying the groundwork for camera support.
+
+> **PLEASE NOTE:**
+> This update's new camera **does not work with basic culling**; you'll have to enable visibility culling to use the camera
+
 ## V0.1.3
 > 8/24/2026
 
