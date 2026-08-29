@@ -10,7 +10,6 @@
 #include <mutex>
 #include <condition_variable>
 #include <unordered_map>
-#include <atomic>
 #include <stdexcept>
 #include <iostream>
 
@@ -39,11 +38,6 @@ struct IndexRange {
 
 #include "Threading.hpp"
 
-/*
-Engine stores all data for each fields in one vector,
-keeps track of static object count and dynamic object count
-and then keeps data in sync (Splits static and Dynamic objects)
-*/
 
 using CheckVisibleRangeFnPtr = void(ObjectManager::*)(
     IndexRange Range, Worker* Thread);
@@ -169,31 +163,31 @@ public:
     // Diagnostics -----------------------------------
     #ifdef Blokk_Diagnostics
 
-    uint32_t GetTotalObjects() {
+    uint32_t GetTotalObjects() const {
         return ObjectCount;
     }
 
-    uint32_t GetStaticObjectCount() {
+    uint32_t GetStaticObjectCount() const {
         return StaticObjectCount;
     }
     
-    uint32_t GetDynamicObjectCount() {
+    uint32_t GetDynamicObjectCount() const {
         return DynamicObjectCount;
     }
 
-    uint32_t GetOpenedThreads() {
+    uint32_t GetOpenedThreads() const {
         return OpenedThreads;
     }
 
-    uint32_t GetTotalThreads() {
+    uint32_t GetTotalThreads() const {
         return ThreadCount;
     }
 
-    double GetFrameExecutionTime() {
+    double GetFrameExecutionTime() const {
         return FrameExecutionTime;
     }
 
-    double GetTargetExecutionTime() {
+    double GetTargetExecutionTime() const {
         return TargetExecutionTime;
     }
 
@@ -306,30 +300,33 @@ public:
     // Camera functions
     #ifdef Blokk_CamEnabled
     class Camera {
+
+    public:
         void SetPosition(int32_t X, int32_t Y)
         {
-            CameraPosition.x = X;
-            CameraPosition.y = Y;
+            CameraX = X;
+            CameraY = Y;
         }
-
         void SetPosition(Vector2 Pos)
         {
-            CameraPosition = Pos;
+            CameraX = Pos.x;
+            CameraY = Pos.y;
         }
 
         void SetXPosition(int32_t X) {
-            CameraPosition.x = X;
+            CameraX = X;
         }
-
         void SetYPosition(int32_t Y) {
-            CameraPosition.y = Y;
+            CameraY = Y;
         }
 
-        
-        void ChangeYPosition(int32_t Y) {
-            CameraPosition += Y;
+        void ChangeXPosition(int32_t X) {
+            CameraX += X;
         }
-    }
+        void ChangeYPosition(int32_t Y) {
+            CameraY += Y;
+        }
+    };
     #endif
 
 // PRIVATE -------------------------------------------
@@ -341,41 +338,43 @@ private:
 
     // Camera
     #ifdef Blokk_CamEnabled
-    Vector2 CameraPosition;
-    Vector2 CameraVelocity;
+    int32_t CameraX;
+    int32_t CameraY;
+    int32_t CameraVelX;
+    int32_t CameraVelY;
     #endif
 
     // Positions
-    vector<float> XPositions;
-    vector<float> YPositions;
+    std::vector<float> XPositions;
+    std::vector<float> YPositions;
 
     // Velocities
-    vector<float> XVelocities;
-    vector<float> YVelocities;
+    std::vector<float> XVelocities;
+    std::vector<float> YVelocities;
 
     // Collisions
-    vector<float> Right;
-    vector<float> Left;
-    vector<CollisionBoxType> CollisionTypes;
-    vector<CollisionHit> Collisions;
+    std::vector<float> Right;
+    std::vector<float> Left;
+    std::vector<CollisionBoxType> CollisionTypes;
+    std::vector<CollisionHit> Collisions;
     
     // Animations
-    vector<uint32_t> FrameNums;
-    vector<uint32_t> AnimNums;
+    std::vector<uint32_t> FrameNums;
+    std::vector<uint32_t> AnimNums;
     // Stores the animation names, points to an index in the animations
     unordered_map<string, uint32_t> AnimNames;
     // Stores a list of animations
-    vector<vector<Texture2D>> Frames;
-    vector<vector<uint32_t>> FrameWidths;
-    vector<vector<uint32_t>> FrameHeights;
-    vector<uint32_t> AnimFrameCounts;
+    std::vector<std::vector<Texture2D>> Frames;
+    std::vector<std::vector<uint32_t>> FrameWidths;
+    std::vector<std::vector<uint32_t>> FrameHeights;
+    std::vector<uint32_t> AnimFrameCounts;
     
     // Visibility
-    vector<uint32_t> AnimHeights;
-    vector<uint32_t> AnimWidths;
+    std::vector<uint32_t> AnimHeights;
+    std::vector<uint32_t> AnimWidths;
 
     // Pointers to object instances
-    vector<GameObject*> ObjectInstances;
+    std::vector<GameObject*> ObjectInstances;
 
     // Update commands
     queue<FieldUpdate<float>> FieldUpdateCommands;
@@ -385,11 +384,8 @@ private:
     queue<DynamicRegisterInfo> IntoDynamic;
     queue<uint32_t> IntoStatic;
 
-    queue<FieldUpdate<bool>> BoolUpdates;
-    queue<FieldUpdate<uint32_t>> UIntUpdates;
-
     // Rendering
-    vector<uint32_t> RenderObjectIdxs;
+    std::vector<uint32_t> RenderObjectIdxs;
 
     // Workers
     uint32_t ThreadCount;
@@ -503,10 +499,15 @@ private:
 
     // Time engine processes -------------------------------------------------
 
+    // Do the engine processes and time it
     double TimeEngineProcesses();
 
-    // Do the engine processes and time it
-    void SwapObjects(uint32_t Obj1, uint32_t Obj2);
+    // Swap 2 objects
+    void SwapStaticObjects(uint32_t Obj1, uint32_t Obj2);
+    void SwapDynamicObjects(uint32_t Obj1, uint32_t Obj2);
+
+    // Destroy an object
+    void DestroyObject(uint32_t ObjIdx);
 
     // POSITIONS W/ VELS -------------------------------------------------------------------
 
@@ -547,7 +548,7 @@ private:
     template <ConfiguredUpdateType T>
     void ProcessFieldUpdateCommand(FieldUpdate<T> Command);
 
-    void ProcessAddCommands(ObjectCreationParams Fields);
+    void ProcessAddCommand(ObjectCreationParams Fields);
 
     void ProcessDoubleUpdateCommand(DoubleFieldUpdate<float> Command);
 
