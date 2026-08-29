@@ -4,6 +4,7 @@ Using the engine is made to be as easy as possible.
 Before you use it, you need to `#define` specific things you want the engine to do **before** including the engine:
 * `Blokk_Visibility_CullType` - `0` for basic, `1` for axis ([more info](RenderCullingSystems.md))
 * `Blokk_Diagnostics` - Define for the engine to get diagnostics ([more info](Diagnostics.md))
+* `Blokk_CamEnabled` - Define for the engine to enable the camera ([more info](Camera.md))
 
 To use it, create a new instance off the `ObjectManager` class. 
 ```cpp
