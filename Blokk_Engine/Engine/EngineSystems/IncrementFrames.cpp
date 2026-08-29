@@ -6,28 +6,27 @@
 #include "SIMD_Finder.hpp"
 #include "EngineClassData.hpp"
 
-using namespace std;
 
 // Forward declarations for SIMD helper functions
 void IncrementFrames_SIMD_AVX2(
-    vector<uint32_t>& FrameNums,
-    size_t Size
+    std::vector<uint32_t>& FrameNums,
+    uint32_t Size
 );
 
 void IncrementFrames_SIMD_AVX512(
-    vector<uint32_t>& FrameNums,
-    size_t Size
+    std::vector<uint32_t>& FrameNums,
+    uint32_t Size
 );
 
 void IncrementFrames_SIMD_SSE2(
-    vector<uint32_t>& FrameNums,
-    size_t Size
+    std::vector<uint32_t>& FrameNums,
+    uint32_t Size
 );
 
 void ObjectManager::IncrementFrames(
-    vector<uint32_t>& FrameNums
+    std::vector<uint32_t>& FrameNums
 ) {
-    size_t Size = FrameNums.size();
+    uint32_t Size = FrameNums.size();
     switch(SIMDRegisterLevel)
     {
         // 256 bit
@@ -51,14 +50,14 @@ void ObjectManager::IncrementFrames(
 __attribute__((target("avx2")))
 // AXV / AXV2 (256 bit - 8 floats) - 8 at a time
 void IncrementFrames_SIMD_AVX2(
-    vector<uint32_t>& FrameNums,
-    size_t Size
+    std::vector<uint32_t>& FrameNums,
+    uint32_t Size
 ) {
     // Helper
     __m256i One = _mm256_set1_epi32(1);
 
     // Loop
-    size_t i = 0;
+    uint32_t i = 0;
     for(; i + 8 <= Size; i += 8)
     {
         // Frame nums
@@ -88,14 +87,14 @@ void IncrementFrames_SIMD_AVX2(
 __attribute__((target("avx512f")))
 // AXV512 (512 bit, 16 floats) - 16 at a time
 void IncrementFrames_SIMD_AVX512(
-    vector<uint32_t>& FrameNums,
-    size_t Size
+    std::vector<uint32_t>& FrameNums,
+    uint32_t Size
 ) {
     // Helper
     __m512i One = _mm512_set1_epi32(1);
 
     // Loop
-    size_t i = 0;
+    uint32_t i = 0;
     for(; i + 16 <= Size; i += 16)
     {
         // Frame nums
@@ -125,14 +124,14 @@ void IncrementFrames_SIMD_AVX512(
 __attribute__((target("sse2")))
 // SSE2 (128 bit, 4 floats) - 4 at a time
 void IncrementFrames_SIMD_SSE2(
-    vector<uint32_t>& FrameNums,
-    size_t Size
+    std::vector<uint32_t>& FrameNums,
+    uint32_t Size
 ) {
     // Helper
     __m128i One = _mm_set1_epi32(1);
 
     // Loop
-    size_t i = 0;
+    uint32_t i = 0;
     for(; i + 4 <= Size; i += 4)
     {
         // Frame nums
