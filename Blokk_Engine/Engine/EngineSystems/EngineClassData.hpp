@@ -155,8 +155,16 @@ public:
 
             uint32_t Frame = FrameNums[Idx] % FrameCount;
             Texture2D Texture = Frames[Anim][Frame];
+
+            #ifdef Blokk_CamEnabled
+                int32_t x = XPositions[Idx] + CameraX;
+                int32_t y = YPositions[Idx] + CameraY;
+            #else
+                int32_t x = XPositions[Idx];
+                int32_t y = YPositions[Idx];
+            #endif
             
-            DrawTexture(Texture, XPositions[Idx], YPositions[Idx], WHITE);
+            DrawTexture(Texture, x, y, WHITE);
         }
     }
 
