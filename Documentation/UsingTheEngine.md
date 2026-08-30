@@ -47,11 +47,11 @@ int main()
     SetTargetFPS(60);
 
     // Create an ObjectManager
-    ManagerCreation MCr = {
+    Blokk::ManagerCreation MCr = {
         Vector2{1280, 720}, // Screen dimensions
         60 // FPS
     };
-    ObjectManager MyManager(MCr); // New instance
+    Blokk::ObjectManager MyManager(MCr); // New instance
 
     // raylib loop
     while(!WindowShouldClose())
