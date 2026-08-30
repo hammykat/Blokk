@@ -4,8 +4,9 @@
 #include <concepts>
 
 #include "raylib.h"
+#include "GameObject.hpp"
 
-class GameObject;
+namespace Blokk {
 
 enum class CommandTypes {
     Destroy,
@@ -14,12 +15,6 @@ enum class CommandTypes {
     Add, 
     Multiply,
     Divide
-};
-
-enum class RenderTypes {
-    Circle,
-    Rectangle,
-    Texture
 };
 
 
@@ -57,3 +52,5 @@ struct ObjectCreationParams
     Vector2 Velocity;
     GameObject *Object;
 };
+
+}
