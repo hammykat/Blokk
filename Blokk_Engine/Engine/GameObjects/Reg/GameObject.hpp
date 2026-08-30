@@ -13,8 +13,9 @@ using namespace std;
 
 #define Vel_ZERO Vector2{0, 0}
 
+namespace Blokk {
+
 class ObjectManager;
-class GameObject;
 
 class GameObject {
 
@@ -41,7 +42,7 @@ public:
         EngineDoubleUpdates(EngineObjects->DoubleFieldUpdateCommands),
         IsStatic(CP.Velocity.x == 0 && CP.Velocity.y == 0),
         EngineIdx(0),
-        IsVisible(false)
+        IsVisible(true)
     {
         EngineObjects->Creations.push(CP);
     }
@@ -231,3 +232,5 @@ public:
 
     void SetFrameNum(uint32_t FrameNum);
 };
+
+}

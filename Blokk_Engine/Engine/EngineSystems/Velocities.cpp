@@ -3,24 +3,29 @@
 #include "ObjectUpdateStructs.hpp"
 #include "SIMD_Finder.hpp"
 
-// Forward declarations for SIMD helper functions
-void ProcessVelocities_SIMD_AVX2(
-    float* PosX, float* PosY, 
-    const float* VelX, const float* VelY, 
-    uint32_t Size
-);
+namespace Blokk {
 
-void ProcessVelocities_SIMD_AVX512(
-    float* PosX, float* PosY, 
-    const float* VelX, const float* VelY, 
-    uint32_t Size
-);
+    // Forward declarations for SIMD helper functions
+    namespace InternalHelpers 
+    {
+        void ProcessVelocities_SIMD_AVX2(
+            float* PosX, float* PosY, 
+            const float* VelX, const float* VelY, 
+            uint32_t Size
+        );
 
-void ProcessVelocities_SIMD_SSE2(
-    float* PosX, float* PosY, 
-    const float* VelX, const float* VelY, 
-    uint32_t Size
-);
+        void ProcessVelocities_SIMD_AVX512(
+            float* PosX, float* PosY, 
+            const float* VelX, const float* VelY, 
+            uint32_t Size
+        );
+
+        void ProcessVelocities_SIMD_SSE2(
+            float* PosX, float* PosY, 
+            const float* VelX, const float* VelY, 
+            uint32_t Size
+        );
+    }
 
 // Update a range of positions
 void ObjectManager::UpdateRangeOfPositions(IndexRange TRange, Worker* Thread)
@@ -43,21 +48,23 @@ void ObjectManager::UpdatePositionsFn(
     // 256 bit
     if constexpr (Level == SIMDLevel::AVX2)
     {
-        ProcessVelocities_SIMD_AVX2(PosX, PosY, VelX, VelY, Size);
+        InternalHelpers::ProcessVelocities_SIMD_AVX2(PosX, PosY, VelX, VelY, Size);
     }
     // 512 bit
     else if constexpr (Level == SIMDLevel::AVX512)
     {
-        ProcessVelocities_SIMD_AVX512(PosX, PosY, VelX, VelY, Size);
+        InternalHelpers::ProcessVelocities_SIMD_AVX512(PosX, PosY, VelX, VelY, Size);
     }
     // 128 bit - default
     else
     {
-        ProcessVelocities_SIMD_SSE2(PosX, PosY, VelX, VelY, Size);
+        InternalHelpers::ProcessVelocities_SIMD_SSE2(PosX, PosY, VelX, VelY, Size);
     }
 }
 
 // Helpers for SIMD velocities ---------------------------
+namespace InternalHelpers 
+{
 
 __attribute__((target("avx2")))
 // AXV / AXV2 (256 bit - 8 floats) - 8 at a time
@@ -182,4 +189,8 @@ void ProcessVelocities_SIMD_SSE2(
         // Update y
         PosY[i] += VelY[i];
     }
+}
+
+}
+
 }
