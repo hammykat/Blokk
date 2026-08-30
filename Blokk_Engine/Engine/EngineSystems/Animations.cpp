@@ -1,6 +1,12 @@
+#include <string>
+#include <vector>
+
 #include "EngineClassData.hpp"
 
-void ObjectManager::CreateNewEmptyAnimation(string Name)
+namespace Blokk 
+{
+
+void ObjectManager::CreateNewEmptyAnimation(std::string Name)
 {
     AnimNames[Name] = Frames.size();
     Frames.emplace_back();
@@ -9,11 +15,14 @@ void ObjectManager::CreateNewEmptyAnimation(string Name)
     AnimFrameCounts.push_back(0);
 }
 
-void ObjectManager::AddFramesToAnimation(string Name, vector<Texture2D>& TFrames)
+void ObjectManager::AddFramesToAnimation(
+    std::string Name,
+    std::vector<Texture2D>& TFrames
+)
 {
     // Helpers
     uint32_t AnimIdx = AnimNames[Name];
-    vector<Texture2D>& TargetAnim = Frames[AnimIdx];
+    std::vector<Texture2D>& TargetAnim = Frames[AnimIdx];
 
     // Insert frames
     TargetAnim.insert(
@@ -23,12 +32,12 @@ void ObjectManager::AddFramesToAnimation(string Name, vector<Texture2D>& TFrames
     );
 
     // Helpers
-    vector<uint32_t>& Widths = FrameWidths[AnimIdx];
-    vector<uint32_t>& Heights = FrameHeights[AnimIdx];
+    std::vector<uint32_t>& Widths = FrameWidths[AnimIdx];
+    std::vector<uint32_t>& Heights = FrameHeights[AnimIdx];
     uint32_t& AnimSize = AnimFrameCounts[AnimIdx];
 
     // Loop through frames
-    for(auto& Frame : TFrames)
+    for (auto& Frame : TFrames)
     {
         // Add width + height
         Widths.push_back(Frame.width);
@@ -38,7 +47,10 @@ void ObjectManager::AddFramesToAnimation(string Name, vector<Texture2D>& TFrames
     AnimSize += TFrames.size();
 }
 
-void ObjectManager::CreateAnimation(string Name, vector<Texture2D>& TFrames)
+void ObjectManager::CreateAnimation(
+    std::string Name,
+    std::vector<Texture2D>& TFrames
+)
 {
     uint32_t Idx = Frames.size();
     AnimNames[Name] = Idx;
@@ -48,11 +60,11 @@ void ObjectManager::CreateAnimation(string Name, vector<Texture2D>& TFrames)
     FrameHeights.emplace_back();
 
     // Helpers
-    vector<uint32_t>& Widths = FrameWidths[Idx];
-    vector<uint32_t>& Heights = FrameHeights[Idx];
+    std::vector<uint32_t>& Widths = FrameWidths[Idx];
+    std::vector<uint32_t>& Heights = FrameHeights[Idx];
 
     // Loop through frames
-    for(auto& Frame : TFrames)
+    for (auto& Frame : TFrames)
     {
         // Add width + height
         Widths.push_back(Frame.width);
@@ -60,4 +72,6 @@ void ObjectManager::CreateAnimation(string Name, vector<Texture2D>& TFrames)
     }
 
     AnimFrameCounts.push_back(TFrames.size());
+}
+
 }
