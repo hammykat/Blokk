@@ -1,3 +1,25 @@
+# v0.1.5
+> 8/30/2026
+
+## New Features
+- Added configurable thread control with `Blokk_Thread_Control`.
+- Added `Blokk_Thread_AdaptiveTiming` for automatically adjusting the number of worker threads based on frame execution time.
+- Added `Blokk_Thread_FixedCount` for manually controlling the number of worker threads.
+- Added `SetThreadCount()` to change the active worker thread count.
+- Added safety checks for invalid thread counts.
+- Improved SIMD visibility culling organization with internal helper functions.
+- Added improved namespace organization for internal engine functionality.
+
+## Visibility Culling
+- Refactored Basic and Axis visibility culling.
+- Organized SSE2, AVX2, and AVX-512 visibility functions under `InternalHelpers`.
+- Fixed visibility range indexing when processing worker ranges.
+
+## Threading
+- The engine can now choose between adaptive and fixed thread-count modes.
+- Adaptive threading can increase or decrease the number of active worker threads based on performance.
+- Fixed threading allows the user to specify exactly how many worker threads the engine should use.
+
 ## V0.1.4
 > 8/28/2026
 
