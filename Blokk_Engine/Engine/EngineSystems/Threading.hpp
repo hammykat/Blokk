@@ -4,10 +4,14 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include <vector>
+#include <cstdint>
+
+namespace Blokk
+{
 
 class ObjectManager;
 class Worker;
-
 
 using WorkerJobFunction =
     void (ObjectManager::*)(IndexRange, Worker*);
@@ -57,7 +61,8 @@ public:
 
     void SetRange(IndexRange Range)
     {
-        lock_guard<std::mutex> Lock(Mutex);
+        std::lock_guard<std::mutex> Lock(Mutex);
+
         TargetRange = Range;
         HasWork = true;
         Finished = false;
@@ -67,7 +72,7 @@ public:
 
     bool IsFinished()
     {
-        lock_guard<std::mutex> Lock(Mutex);
+        std::lock_guard<std::mutex> Lock(Mutex);
         return Finished;
     }
 
@@ -92,7 +97,7 @@ public:
 
     void WaitUntilFinished()
     {
-        unique_lock<mutex> Lock(Mutex);
+        std::unique_lock<std::mutex> Lock(Mutex);
 
         FinishedCV.wait(Lock, [this]()
         {
@@ -102,19 +107,24 @@ public:
 
     inline static ObjectManager* Manager = nullptr;
     inline static WorkerJobFunction CurrentJob = nullptr;
+
     std::atomic<bool> Running = true;
 
-    vector<uint32_t> IdxResult;
+    std::vector<uint32_t> IdxResult;
 
 private:
 
     IndexRange TargetRange;
 
     std::thread Thread;
+
     bool HasWork = false;
     bool Finished = true;
-    condition_variable FinishedCV;
+
+    std::condition_variable FinishedCV;
 
     std::mutex Mutex;
-    condition_variable CV;
+    std::condition_variable CV;
 };
+
+}
