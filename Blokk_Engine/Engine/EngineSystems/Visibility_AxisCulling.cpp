@@ -1,3 +1,6 @@
+#include <cstdint>
+#include <vector>
+
 #include <emmintrin.h>
 #include <immintrin.h>
 
@@ -5,511 +8,613 @@
 
 #if (Blokk_Visibility_CullType == 1)
 
-// Forward declarations
-vector<uint32_t> CheckVisible_Axis_SIMD_AVX2(
-    uint32_t ScreenWidth,
-    uint32_t ScreenHeight,
-    uint32_t* AnimWidths,
-    uint32_t* AnimHeights,
-    float* PosX,
-    float* PosY,
-    uint32_t Size,
-    uint32_t StartIdx
-);
+namespace Blokk {
 
-vector<uint32_t> CheckVisible_Axis_SIMD_AVX512(
-    uint32_t ScreenWidth,
-    uint32_t ScreenHeight,
-    uint32_t* AnimWidths,
-    uint32_t* AnimHeights,
-    float* PosX,
-    float* PosY,
-    uint32_t Size,
-    uint32_t StartIdx
-);
+    // Forward declarations
+    namespace InternalHelpers 
+    {
+        std::vector<std::uint32_t> CheckVisible_Axis_SIMD_AVX2(
+            std::uint32_t ScreenWidth,
+            std::uint32_t ScreenHeight,
+            std::uint32_t* AnimWidths,
+            std::uint32_t* AnimHeights,
+            float* PosX,
+            float* PosY,
+            std::uint32_t Size,
+            std::uint32_t StartIdx
+        );
 
-vector<uint32_t> CheckVisible_Axis_SIMD_SSE2(
-    uint32_t ScreenWidth,
-    uint32_t ScreenHeight,
-    uint32_t* AnimWidths,
-    uint32_t* AnimHeights,
-    float* PosX,
-    float* PosY,
-    uint32_t Size,
-    uint32_t StartIdx
-);
+        std::vector<std::uint32_t> CheckVisible_Axis_SIMD_AVX512(
+            std::uint32_t ScreenWidth,
+            std::uint32_t ScreenHeight,
+            std::uint32_t* AnimWidths,
+            std::uint32_t* AnimHeights,
+            float* PosX,
+            float* PosY,
+            std::uint32_t Size,
+            std::uint32_t StartIdx
+        );
 
-// ObjectManager Visibility Function
+        std::vector<std::uint32_t> CheckVisible_Axis_SIMD_SSE2(
+            std::uint32_t ScreenWidth,
+            std::uint32_t ScreenHeight,
+            std::uint32_t* AnimWidths,
+            std::uint32_t* AnimHeights,
+            float* PosX,
+            float* PosY,
+            std::uint32_t Size,
+            std::uint32_t StartIdx
+        );
 
-template <SIMDLevel Level>
-void ObjectManager::CheckVisibilityFn_Axis(IndexRange Range, Worker* Thread)
-{
-    // AVX / AVX2
-    // 256-bit = 8 floats
+        std::vector<std::uint32_t> CheckVisible_AxisY_SIMD_AVX2(
+            std::uint32_t ScreenHeight,
+            std::uint32_t* AnimHeights,
+            float* PosY,
+            std::uint32_t Size,
+            std::uint32_t StartIdx
+        );
 
-    if constexpr (Level == SIMDLevel::AVX2) {
-        Thread->IdxResult =
-            CheckVisible_Axis_SIMD_AVX2(
-                ScreenWidth,
-                ScreenHeight,
+        std::vector<std::uint32_t> CheckVisible_AxisY_SIMD_AVX512(
+            std::uint32_t ScreenHeight,
+            std::uint32_t* AnimHeights,
+            float* PosY,
+            std::uint32_t Size,
+            std::uint32_t StartIdx
+        );
 
-                &AnimWidths[Range.Start],
-                &AnimHeights[Range.Start],
-                &XPositions[Range.Start],
-                &YPositions[Range.Start],
-
-                Range.GetSize(),
-                Range.Start
-            );
+        std::vector<std::uint32_t> CheckVisible_AxisY_SIMD_SSE2(
+            std::uint32_t ScreenHeight,
+            std::uint32_t* AnimHeights,
+            float* PosY,
+            std::uint32_t Size,
+            std::uint32_t StartIdx
+        );
     }
 
-    // AVX-512
-    // 512-bit = 16 floats
+    // ObjectManager Visibility Function
 
-    else if constexpr (Level == SIMDLevel::AVX512) {
-        Thread->IdxResult =
-            CheckVisible_Axis_SIMD_AVX512(
-                ScreenWidth,
-                ScreenHeight,
+    template <SIMDLevel Level>
+    void ObjectManager::CheckVisibilityFn_Axis(
+        IndexRange Range,
+        Worker* Thread
+    )
+    {
+        // AVX / AVX2
+        // 256-bit = 8 floats
 
-                &AnimWidths[Range.Start],
-                &AnimHeights[Range.Start],
-                &XPositions[Range.Start],
-                &YPositions[Range.Start],
+        if constexpr (Level == SIMDLevel::AVX2)
+        {
+            Thread->IdxResult =
+                InternalHelpers::CheckVisible_Axis_SIMD_AVX2(
+                    ScreenWidth,
+                    ScreenHeight,
 
-                Range.GetSize(),
-                Range.Start
-            );
-    }
+                    &AnimWidths[Range.Start],
+                    &AnimHeights[Range.Start],
+                    &XPositions[Range.Start],
+                    &YPositions[Range.Start],
 
-    // SSE2
-    // 128-bit = 4 floats
+                    Range.GetSize(),
+                    Range.Start
+                );
+        }
 
-    else {
-        Thread->IdxResult =
-            CheckVisible_Axis_SIMD_SSE2(
-                ScreenWidth,
-                ScreenHeight,
+        // AVX-512
+        // 512-bit = 16 floats
 
-                &AnimWidths[Range.Start],
-                &AnimHeights[Range.Start],
-                &XPositions[Range.Start],
-                &YPositions[Range.Start],
+        else if constexpr (Level == SIMDLevel::AVX512)
+        {
+            Thread->IdxResult =
+                InternalHelpers::CheckVisible_Axis_SIMD_AVX512(
+                    ScreenWidth,
+                    ScreenHeight,
 
-                Range.GetSize(),
-                Range.Start
-            );
-    }
-}
+                    &AnimWidths[Range.Start],
+                    &AnimHeights[Range.Start],
+                    &XPositions[Range.Start],
+                    &YPositions[Range.Start],
 
-// AVX2 - X + Y Visibility
+                    Range.GetSize(),
+                    Range.Start
+                );
+        }
 
-__attribute__((target("avx2")))
-vector<uint32_t> CheckVisible_Axis_SIMD_AVX2(
-    uint32_t ScreenWidth,
-    uint32_t ScreenHeight,
-    uint32_t* AnimWidths,
-    uint32_t* AnimHeights,
-    float* PosX,
-    float* PosY,
-    uint32_t Size,
-    uint32_t StartIdx
-) {
-    vector<uint32_t> Result;
+        // SSE2
+        // 128-bit = 4 floats
 
-    // First cull against Y axis
-    vector<uint32_t> YAxisCulled = CheckVisible_AxisY_SIMD_AVX2(
-        ScreenHeight,
-        AnimHeights,
-        PosY,
-        Size,
-        StartIdx
-    );
+        else
+        {
+            Thread->IdxResult =
+                InternalHelpers::CheckVisible_Axis_SIMD_SSE2(
+                    ScreenWidth,
+                    ScreenHeight,
 
-    // Then check X axis
-    for (uint32_t Idx : YAxisCulled) {
-        float MinX = PosX[Idx];
-        float MaxX = MinX + AnimWidths[Idx];
+                    &AnimWidths[Range.Start],
+                    &AnimHeights[Range.Start],
+                    &XPositions[Range.Start],
+                    &YPositions[Range.Start],
 
-        // Camera offsets
-        #ifdef Blokk_CamEnabled
-        MinX -= CameraX;
-        MaxX -= CameraX;
-        #endif
-
-        if (MaxX > 0 && MinX < ScreenWidth) {
-            Result.push_back(Idx);
+                    Range.GetSize(),
+                    Range.Start
+                );
         }
     }
 
-    return Result;
-}
 
-// AVX2 - Y Visibility
+    namespace InternalHelpers {
 
-__attribute__((target("avx2")))
-vector<uint32_t> CheckVisible_AxisY_SIMD_AVX2(
-    uint32_t ScreenHeight,
-    uint32_t* AnimHeights,
-    float* PosY,
-    uint32_t Size,
-    uint32_t StartIdx
-) {
-    __m256 Zero = _mm256_set1_ps(0.0f);
-    __m256 ScrHeight = _mm256_set1_ps(
-        static_cast<float>(ScreenHeight)
-    );
+    // AVX2 - X + Y Visibility
 
-    #ifdef Blokk_CamEnabled
-    __m256 CamY = _mm256_set1_ps(CameraY);
-    #endif
+    __attribute__((target("avx2")))
+    std::vector<std::uint32_t> CheckVisible_Axis_SIMD_AVX2(
+        std::uint32_t ScreenWidth,
+        std::uint32_t ScreenHeight,
+        std::uint32_t* AnimWidths,
+        std::uint32_t* AnimHeights,
+        float* PosX,
+        float* PosY,
+        std::uint32_t Size,
+        std::uint32_t StartIdx
+    )
+    {
+        std::vector<std::uint32_t> Result;
 
-    vector<uint32_t> ResultIdx;
+        // First cull against Y axis
+        std::vector<std::uint32_t> YAxisCulled =
+            CheckVisible_AxisY_SIMD_AVX2(
+                ScreenHeight,
+                AnimHeights,
+                PosY,
+                Size,
+                StartIdx
+            );
 
-    uint32_t i = 0;
+        // Then check X axis
+        for (std::uint32_t Idx : YAxisCulled)
+        {
+            float MinX = PosX[Idx];
+            float MaxX = MinX + AnimWidths[Idx];
 
-    // Process 8 objects at a time
+            // Camera offsets
+            #ifdef Blokk_CamEnabled
+            MinX -= CameraX;
+            MaxX -= CameraX;
+            #endif
 
-    for (; i + 8 <= Size; i += 8) {
-        // Positions
-        __m256 MinYPos = _mm256_loadu_ps(&PosY[i]);
+            if (MaxX > 0 && MinX < ScreenWidth)
+            {
+                Result.push_back(Idx);
+            }
+        }
 
-        // Animation heights
-        __m256i IntHeights = _mm256_loadu_si256(
-            reinterpret_cast<const __m256i*>(&AnimHeights[i])
+        return Result;
+    }
+
+
+    // AVX2 - Y Visibility
+
+    __attribute__((target("avx2")))
+    std::vector<std::uint32_t> CheckVisible_AxisY_SIMD_AVX2(
+        std::uint32_t ScreenHeight,
+        std::uint32_t* AnimHeights,
+        float* PosY,
+        std::uint32_t Size,
+        std::uint32_t StartIdx
+    )
+    {
+        __m256 Zero = _mm256_set1_ps(0.0f);
+
+        __m256 ScrHeight = _mm256_set1_ps(
+            static_cast<float>(ScreenHeight)
         );
 
-        // uint32 -> float
-        __m256 Heights = _mm256_cvtepi32_ps(IntHeights);
-
-        // Max Y
-        __m256 MaxYPos = _mm256_add_ps(MinYPos, Heights);
-
-        // Camera offsets
         #ifdef Blokk_CamEnabled
-        MinYPos = _mm256_sub_ps(MinYPos, CamY);
-        MaxYPos = _mm256_sub_ps(MaxYPos, CamY);
+        __m256 CamY = _mm256_set1_ps(CameraY);
         #endif
 
-        // MinY < ScreenHeight
-        __m256 YRes = _mm256_cmp_ps(
-            MinYPos,
-            ScrHeight,
-            _CMP_LT_OQ
-        );
+        std::vector<std::uint32_t> ResultIdx;
 
-        // MaxY > 0
-        __m256 YRes0 = _mm256_cmp_ps(
-            MaxYPos,
-            Zero,
-            _CMP_GT_OQ
-        );
+        std::uint32_t i = 0;
 
-        // Combine
-        __m256 YResult = _mm256_and_ps(YRes, YRes0);
+        // Process 8 objects at a time
 
-        // Convert to 8-bit mask
-        int Result = _mm256_movemask_ps(YResult);
+        for (; i + 8 <= Size; i += 8)
+        {
+            // Positions
+            __m256 MinYPos = _mm256_loadu_ps(&PosY[i]);
 
-        // Store visible indexes
-        if (Result != 0) {
-            for (int l = 0; l < 8; ++l) {
-                if (Result & (1 << l)) {
-                    ResultIdx.push_back(StartIdx + i + l);
+            // Animation heights
+            __m256i IntHeights = _mm256_loadu_si256(
+                reinterpret_cast<const __m256i*>(&AnimHeights[i])
+            );
+
+            // uint32 -> float
+            __m256 Heights = _mm256_cvtepi32_ps(IntHeights);
+
+            // Max Y
+            __m256 MaxYPos = _mm256_add_ps(
+                MinYPos,
+                Heights
+            );
+
+            // Camera offsets
+            #ifdef Blokk_CamEnabled
+            MinYPos = _mm256_sub_ps(MinYPos, CamY);
+            MaxYPos = _mm256_sub_ps(MaxYPos, CamY);
+            #endif
+
+            // MinY < ScreenHeight
+            __m256 YRes = _mm256_cmp_ps(
+                MinYPos,
+                ScrHeight,
+                _CMP_LT_OQ
+            );
+
+            // MaxY > 0
+            __m256 YRes0 = _mm256_cmp_ps(
+                MaxYPos,
+                Zero,
+                _CMP_GT_OQ
+            );
+
+            // Combine
+            __m256 YResult = _mm256_and_ps(
+                YRes,
+                YRes0
+            );
+
+            // Convert to 8-bit mask
+            int Result = _mm256_movemask_ps(YResult);
+
+            // Store visible indexes
+            if (Result != 0)
+            {
+                for (int l = 0; l < 8; ++l)
+                {
+                    if (Result & (1 << l))
+                    {
+                        ResultIdx.push_back(
+                            StartIdx + i + l
+                        );
+                    }
                 }
             }
         }
-    }
 
-    // Remaining objects
+        // Remaining objects
 
-    for (; i < Size; ++i) {
-        float YMin = PosY[i];
-        float YMax = PosY[i] + AnimHeights[i];
+        for (; i < Size; ++i)
+        {
+            float YMin = PosY[i];
+            float YMax = PosY[i] + AnimHeights[i];
 
-        #ifdef Blokk_CamEnabled
-        YMin -= CameraY;
-        YMax -= CameraY;
-        #endif
+            #ifdef Blokk_CamEnabled
+            YMin -= CameraY;
+            YMax -= CameraY;
+            #endif
 
-        if (YMax > 0 && YMin < ScreenHeight) {
-            ResultIdx.push_back(StartIdx + i);
+            if (YMax > 0 && YMin < ScreenHeight)
+            {
+                ResultIdx.push_back(StartIdx + i);
+            }
         }
+
+        return ResultIdx;
     }
 
-    return ResultIdx;
-}
 
-// SSE2 - X + Y Visibility
+    // SSE2 - X + Y Visibility
 
-__attribute__((target("sse2")))
-vector<uint32_t> CheckVisible_Axis_SIMD_SSE2(
-    uint32_t ScreenWidth,
-    uint32_t ScreenHeight,
-    uint32_t* AnimWidths,
-    uint32_t* AnimHeights,
-    float* PosX,
-    float* PosY,
-    uint32_t Size,
-    uint32_t StartIdx
-) {
-    vector<uint32_t> Result;
+    __attribute__((target("sse2")))
+    std::vector<std::uint32_t> CheckVisible_Axis_SIMD_SSE2(
+        std::uint32_t ScreenWidth,
+        std::uint32_t ScreenHeight,
+        std::uint32_t* AnimWidths,
+        std::uint32_t* AnimHeights,
+        float* PosX,
+        float* PosY,
+        std::uint32_t Size,
+        std::uint32_t StartIdx
+    )
+    {
+        std::vector<std::uint32_t> Result;
 
-    // First cull against Y axis
-    vector<uint32_t> YAxisCulled = CheckVisible_AxisY_SIMD_SSE2(
-        ScreenHeight,
-        AnimHeights,
-        PosY,
-        Size,
-        StartIdx
-    );
+        // First cull against Y axis
+        std::vector<std::uint32_t> YAxisCulled =
+            CheckVisible_AxisY_SIMD_SSE2(
+                ScreenHeight,
+                AnimHeights,
+                PosY,
+                Size,
+                StartIdx
+            );
 
-    // Then check X axis
-    for (uint32_t Idx : YAxisCulled) {
-        float MinX = PosX[Idx];
-        float MaxX = MinX + AnimWidths[Idx];
+        // Then check X axis
+        for (std::uint32_t Idx : YAxisCulled)
+        {
+            float MinX = PosX[Idx];
+            float MaxX = MinX + AnimWidths[Idx];
 
-        // Camera offsets
-        #ifdef Blokk_CamEnabled
-        MinX -= CameraX;
-        MaxX -= CameraX;
-        #endif
+            // Camera offsets
+            #ifdef Blokk_CamEnabled
+            MinX -= CameraX;
+            MaxX -= CameraX;
+            #endif
 
-        if (MaxX > 0 && MinX < ScreenWidth) {
-            Result.push_back(Idx);
+            if (MaxX > 0 && MinX < ScreenWidth)
+            {
+                Result.push_back(Idx);
+            }
         }
+
+        return Result;
     }
 
-    return Result;
-}
 
-// SSE2 - Y Visibility
+    // SSE2 - Y Visibility
 
-__attribute__((target("sse2")))
-vector<uint32_t> CheckVisible_AxisY_SIMD_SSE2(
-    uint32_t ScreenHeight,
-    uint32_t* AnimHeights,
-    float* PosY,
-    uint32_t Size,
-    uint32_t StartIdx
-) {
-    __m128 Zero = _mm_set1_ps(0.0f);
-    __m128 ScrHeight = _mm_set1_ps(
-        static_cast<float>(ScreenHeight)
-    );
+    __attribute__((target("sse2")))
+    std::vector<std::uint32_t> CheckVisible_AxisY_SIMD_SSE2(
+        std::uint32_t ScreenHeight,
+        std::uint32_t* AnimHeights,
+        float* PosY,
+        std::uint32_t Size,
+        std::uint32_t StartIdx
+    )
+    {
+        __m128 Zero = _mm_set1_ps(0.0f);
 
-    #ifdef Blokk_CamEnabled
-    __m128 CamY = _mm_set1_ps(CameraY);
-    #endif
-
-    vector<uint32_t> ResultIdx;
-
-    uint32_t i = 0;
-
-    // Process 4 objects at a time
-
-    for (; i + 4 <= Size; i += 4) {
-        // Positions
-        __m128 MinYPos = _mm_loadu_ps(&PosY[i]);
-
-        // Animation heights
-        __m128i IntHeights = _mm_loadu_si128(
-            reinterpret_cast<const __m128i*>(&AnimHeights[i])
+        __m128 ScrHeight = _mm_set1_ps(
+            static_cast<float>(ScreenHeight)
         );
 
-        // uint32 -> float
-        __m128 Heights = _mm_cvtepi32_ps(IntHeights);
-
-        // Max Y
-        __m128 MaxYPos = _mm_add_ps(MinYPos, Heights);
-
-        // Camera offsets
         #ifdef Blokk_CamEnabled
-        MinYPos = _mm_sub_ps(MinYPos, CamY);
-        MaxYPos = _mm_sub_ps(MaxYPos, CamY);
+        __m128 CamY = _mm_set1_ps(CameraY);
         #endif
 
-        // MinY < ScreenHeight
-        __m128 YRes = _mm_cmplt_ps(
-            MinYPos,
-            ScrHeight
-        );
+        std::vector<std::uint32_t> ResultIdx;
 
-        // MaxY > 0
-        __m128 YRes0 = _mm_cmpgt_ps(
-            MaxYPos,
-            Zero
-        );
+        std::uint32_t i = 0;
 
-        // Combine
-        __m128 YResult = _mm_and_ps(YRes, YRes0);
+        // Process 4 objects at a time
 
-        // Convert to 4-bit mask
-        int Result = _mm_movemask_ps(YResult);
+        for (; i + 4 <= Size; i += 4)
+        {
+            // Positions
+            __m128 MinYPos = _mm_loadu_ps(&PosY[i]);
 
-        // Store visible indexes
-        if (Result != 0) {
-            for (int l = 0; l < 4; ++l) {
-                if (Result & (1 << l)) {
-                    ResultIdx.push_back(StartIdx + i + l);
+            // Animation heights
+            __m128i IntHeights = _mm_loadu_si128(
+                reinterpret_cast<const __m128i*>(&AnimHeights[i])
+            );
+
+            // uint32 -> float
+            __m128 Heights = _mm_cvtepi32_ps(IntHeights);
+
+            // Max Y
+            __m128 MaxYPos = _mm_add_ps(
+                MinYPos,
+                Heights
+            );
+
+            // Camera offsets
+            #ifdef Blokk_CamEnabled
+            MinYPos = _mm_sub_ps(MinYPos, CamY);
+            MaxYPos = _mm_sub_ps(MaxYPos, CamY);
+            #endif
+
+            // MinY < ScreenHeight
+            __m128 YRes = _mm_cmplt_ps(
+                MinYPos,
+                ScrHeight
+            );
+
+            // MaxY > 0
+            __m128 YRes0 = _mm_cmpgt_ps(
+                MaxYPos,
+                Zero
+            );
+
+            // Combine
+            __m128 YResult = _mm_and_ps(
+                YRes,
+                YRes0
+            );
+
+            // Convert to 4-bit mask
+            int Result = _mm_movemask_ps(YResult);
+
+            // Store visible indexes
+            if (Result != 0)
+            {
+                for (int l = 0; l < 4; ++l)
+                {
+                    if (Result & (1 << l))
+                    {
+                        ResultIdx.push_back(
+                            StartIdx + i + l
+                        );
+                    }
                 }
             }
         }
-    }
 
-    // Remaining objects
+        // Remaining objects
 
-    for (; i < Size; ++i) {
-        float YMin = PosY[i];
-        float YMax = PosY[i] + AnimHeights[i];
+        for (; i < Size; ++i)
+        {
+            float YMin = PosY[i];
+            float YMax = PosY[i] + AnimHeights[i];
 
-        #ifdef Blokk_CamEnabled
-        YMin -= CameraY;
-        YMax -= CameraY;
-        #endif
+            #ifdef Blokk_CamEnabled
+            YMin -= CameraY;
+            YMax -= CameraY;
+            #endif
 
-        if (YMax > 0 && YMin < ScreenHeight) {
-            ResultIdx.push_back(StartIdx + i);
+            if (YMax > 0 && YMin < ScreenHeight)
+            {
+                ResultIdx.push_back(StartIdx + i);
+            }
         }
+
+        return ResultIdx;
     }
 
-    return ResultIdx;
-}
 
-// AVX-512 - X + Y Visibility
+    // AVX-512 - X + Y Visibility
 
-__attribute__((target("avx512f")))
-vector<uint32_t> CheckVisible_Axis_SIMD_AVX512(
-    uint32_t ScreenWidth,
-    uint32_t ScreenHeight,
-    uint32_t* AnimWidths,
-    uint32_t* AnimHeights,
-    float* PosX,
-    float* PosY,
-    uint32_t Size,
-    uint32_t StartIdx
-) {
-    vector<uint32_t> Result;
+    __attribute__((target("avx512f")))
+    std::vector<std::uint32_t> CheckVisible_Axis_SIMD_AVX512(
+        std::uint32_t ScreenWidth,
+        std::uint32_t ScreenHeight,
+        std::uint32_t* AnimWidths,
+        std::uint32_t* AnimHeights,
+        float* PosX,
+        float* PosY,
+        std::uint32_t Size,
+        std::uint32_t StartIdx
+    )
+    {
+        std::vector<std::uint32_t> Result;
 
-    // First cull against Y axis
-    vector<uint32_t> YAxisCulled =
-        CheckVisible_AxisY_SIMD_AVX512(
-            ScreenHeight,
-            AnimHeights,
-            PosY,
-            Size,
-            StartIdx
-        );
+        // First cull against Y axis
+        std::vector<std::uint32_t> YAxisCulled =
+            CheckVisible_AxisY_SIMD_AVX512(
+                ScreenHeight,
+                AnimHeights,
+                PosY,
+                Size,
+                StartIdx
+            );
 
-    // Then check X axis
-    for (uint32_t Idx : YAxisCulled) {
-        float MinX = PosX[Idx];
-        float MaxX = MinX + AnimWidths[Idx];
+        // Then check X axis
+        for (std::uint32_t Idx : YAxisCulled)
+        {
+            float MinX = PosX[Idx];
+            float MaxX = MinX + AnimWidths[Idx];
 
-        // Camera offsets
-        #ifdef Blokk_CamEnabled
-        MinX -= CameraX;
-        MaxX -= CameraX;
-        #endif
+            // Camera offsets
+            #ifdef Blokk_CamEnabled
+            MinX -= CameraX;
+            MaxX -= CameraX;
+            #endif
 
-        if (MaxX > 0 && MinX < ScreenWidth) {
-            Result.push_back(Idx);
+            if (MaxX > 0 && MinX < ScreenWidth)
+            {
+                Result.push_back(Idx);
+            }
         }
+
+        return Result;
     }
 
-    return Result;
-}
 
-// AVX-512 - Y Visibility
+    // AVX-512 - Y Visibility
 
-__attribute__((target("avx512f")))
-vector<uint32_t> CheckVisible_AxisY_SIMD_AVX512(
-    uint32_t ScreenHeight,
-    uint32_t* AnimHeights,
-    float* PosY,
-    uint32_t Size,
-    uint32_t StartIdx
-) {
-    __m512 Zero = _mm512_set1_ps(0.0f);
-    __m512 ScrHeight = _mm512_set1_ps(
-        static_cast<float>(ScreenHeight)
-    );
+    __attribute__((target("avx512f")))
+    std::vector<std::uint32_t> CheckVisible_AxisY_SIMD_AVX512(
+        std::uint32_t ScreenHeight,
+        std::uint32_t* AnimHeights,
+        float* PosY,
+        std::uint32_t Size,
+        std::uint32_t StartIdx
+    )
+    {
+        __m512 Zero = _mm512_set1_ps(0.0f);
 
-    #ifdef Blokk_CamEnabled
-    __m512 CamY = _mm512_set1_ps(CameraY);
-    #endif
-
-    vector<uint32_t> ResultIdx;
-
-    uint32_t i = 0;
-
-    // Process 16 objects at a time
-
-    for (; i + 16 <= Size; i += 16) {
-        // Positions
-        __m512 MinYPos = _mm512_loadu_ps(&PosY[i]);
-
-        // Animation heights
-        __m512i IntHeights = _mm512_loadu_si512(
-            reinterpret_cast<const void*>(&AnimHeights[i])
+        __m512 ScrHeight = _mm512_set1_ps(
+            static_cast<float>(ScreenHeight)
         );
 
-        // uint32 -> float
-        __m512 Heights = _mm512_cvtepi32_ps(IntHeights);
-
-        // Max Y
-        __m512 MaxYPos = _mm512_add_ps(MinYPos, Heights);
-
-        // Camera offsets
         #ifdef Blokk_CamEnabled
-        MinYPos = _mm512_sub_ps(MinYPos, CamY);
-        MaxYPos = _mm512_sub_ps(MaxYPos, CamY);
+        __m512 CamY = _mm512_set1_ps(CameraY);
         #endif
 
-        // MinY < ScreenHeight
-        __mmask16 YRes = _mm512_cmp_ps_mask(
-            MinYPos,
-            ScrHeight,
-            _CMP_LT_OQ
-        );
+        std::vector<std::uint32_t> ResultIdx;
 
-        // MaxY > 0
-        __mmask16 YRes0 = _mm512_cmp_ps_mask(
-            MaxYPos,
-            Zero,
-            _CMP_GT_OQ
-        );
+        std::uint32_t i = 0;
 
-        // Combine masks
-        __mmask16 YResult = YRes & YRes0;
+        // Process 16 objects at a time
 
-        // Store visible indexes
-        if (YResult != 0) {
-            for (int l = 0; l < 16; ++l) {
-                if (YResult & (1u << l)) {
-                    ResultIdx.push_back(StartIdx + i + l);
+        for (; i + 16 <= Size; i += 16)
+        {
+            // Positions
+            __m512 MinYPos = _mm512_loadu_ps(&PosY[i]);
+
+            // Animation heights
+            __m512i IntHeights = _mm512_loadu_si512(
+                reinterpret_cast<const void*>(&AnimHeights[i])
+            );
+
+            // uint32 -> float
+            __m512 Heights = _mm512_cvtepi32_ps(IntHeights);
+
+            // Max Y
+            __m512 MaxYPos = _mm512_add_ps(
+                MinYPos,
+                Heights
+            );
+
+            // Camera offsets
+            #ifdef Blokk_CamEnabled
+            MinYPos = _mm512_sub_ps(MinYPos, CamY);
+            MaxYPos = _mm512_sub_ps(MaxYPos, CamY);
+            #endif
+
+            // MinY < ScreenHeight
+            __mmask16 YRes = _mm512_cmp_ps_mask(
+                MinYPos,
+                ScrHeight,
+                _CMP_LT_OQ
+            );
+
+            // MaxY > 0
+            __mmask16 YRes0 = _mm512_cmp_ps_mask(
+                MaxYPos,
+                Zero,
+                _CMP_GT_OQ
+            );
+
+            // Combine masks
+            __mmask16 YResult = YRes & YRes0;
+
+            // Store visible indexes
+            if (YResult != 0)
+            {
+                for (int l = 0; l < 16; ++l)
+                {
+                    if (YResult & (1u << l))
+                    {
+                        ResultIdx.push_back(
+                            StartIdx + i + l
+                        );
+                    }
                 }
             }
         }
-    }
 
-    // Remaining objects
+        // Remaining objects
 
-    for (; i < Size; ++i) {
-        float YMin = PosY[i];
-        float YMax = PosY[i] + AnimHeights[i];
+        for (; i < Size; ++i)
+        {
+            float YMin = PosY[i];
+            float YMax = PosY[i] + AnimHeights[i];
 
-        #ifdef Blokk_CamEnabled
-        YMin -= CameraY;
-        YMax -= CameraY;
-        #endif
+            #ifdef Blokk_CamEnabled
+            YMin -= CameraY;
+            YMax -= CameraY;
+            #endif
 
-        if (YMax > 0 && YMin < ScreenHeight) {
-            ResultIdx.push_back(StartIdx + i);
+            if (YMax > 0 && YMin < ScreenHeight)
+            {
+                ResultIdx.push_back(StartIdx + i);
+            }
         }
+
+        return ResultIdx;
+    }
+    
     }
 
-    return ResultIdx;
 }
-
 #endif
