@@ -1,8 +1,11 @@
 #include <utility>
+#include <vector>
 
 #include "raylib.h"
 #include "GameTypes.hpp"
 #include "GameObject.hpp"
+
+namespace Blokk {
 
 void ObjectManager::DestroyObject(uint32_t ObjIdx) 
 {
@@ -175,10 +178,13 @@ void ObjectManager::SwapDynamicObjects(uint32_t Obj1, uint32_t Obj2)
     std::swap(XVelocities[Obj1], XVelocities[Obj2]);
     std::swap(YVelocities[Obj1], YVelocities[Obj2]);
 
+
     // Swap instance pointers
     std::swap(ObjectInstances[Obj1], ObjectInstances[Obj2]);
 
     // Update object's internal vars
     ObjectInstances[Obj1]->EngineIdx = Obj1;
     ObjectInstances[Obj2]->EngineIdx = Obj2;
+}
+
 }
