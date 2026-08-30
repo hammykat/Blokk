@@ -6,22 +6,26 @@
 #include "SIMD_Finder.hpp"
 #include "EngineClassData.hpp"
 
+namespace Blokk {
 
-// Forward declarations for SIMD helper functions
-void IncrementFrames_SIMD_AVX2(
-    std::vector<uint32_t>& FrameNums,
-    uint32_t Size
-);
+    namespace InternalHelpers 
+    {
+        // Forward declarations for SIMD helper functions
+        void IncrementFrames_SIMD_AVX2(
+            std::vector<uint32_t>& FrameNums,
+            uint32_t Size
+        );
 
-void IncrementFrames_SIMD_AVX512(
-    std::vector<uint32_t>& FrameNums,
-    uint32_t Size
-);
+        void IncrementFrames_SIMD_AVX512(
+            std::vector<uint32_t>& FrameNums,
+            uint32_t Size
+        );
 
-void IncrementFrames_SIMD_SSE2(
-    std::vector<uint32_t>& FrameNums,
-    uint32_t Size
-);
+        void IncrementFrames_SIMD_SSE2(
+            std::vector<uint32_t>& FrameNums,
+            uint32_t Size
+        );
+    }
 
 void ObjectManager::IncrementFrames(
     std::vector<uint32_t>& FrameNums
@@ -31,21 +35,23 @@ void ObjectManager::IncrementFrames(
     {
         // 256 bit
         case SIMDLevel::AVX2:
-            IncrementFrames_SIMD_AVX2(FrameNums, Size);
+            InternalHelpers::IncrementFrames_SIMD_AVX2(FrameNums, Size);
             break;
 
         // 512 bit
         case SIMDLevel::AVX512:
-            IncrementFrames_SIMD_AVX512(FrameNums, Size);
+            InternalHelpers::IncrementFrames_SIMD_AVX512(FrameNums, Size);
             break;
 
         // 128 bit
         default:
-            IncrementFrames_SIMD_SSE2(FrameNums, Size);
+            InternalHelpers::IncrementFrames_SIMD_SSE2(FrameNums, Size);
     }
 }
 
 // Helpers for incrementing with SIMD --------------------
+
+namespace InternalHelpers {
 
 __attribute__((target("avx2")))
 // AXV / AXV2 (256 bit - 8 floats) - 8 at a time
@@ -155,4 +161,8 @@ void IncrementFrames_SIMD_SSE2(
         // Update x
         FrameNums[i]++;
     }
+}
+
+}
+
 }
