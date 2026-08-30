@@ -124,8 +124,9 @@ double ObjectManager::TimeEngineProcesses()
             // Set function
             Worker::CurrentJob = CheckVisibleRange;
 
-            // Loop through
-            for (uint32_t i = 0; i < OpenedThreads; i++)
+            // Loop
+            uint32_t Count = std::min(OpenedThreads, static_cast<uint32_t>(VisRanges.size()));
+            for (uint32_t i = 0; i < Count; i++)
             {
                 Workers[i]->SetRange(VisRanges[i]);
             }
