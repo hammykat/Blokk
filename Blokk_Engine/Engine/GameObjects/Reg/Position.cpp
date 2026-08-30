@@ -1,5 +1,7 @@
 #include "GameObject.hpp"
 
+namespace Blokk {
+
 // Set
 void GameObject::SetPosition(float TargetX, float TargetY) 
 {
@@ -59,4 +61,6 @@ void GameObject::ChangeYPosition(float Y)
 {
     UpdateEngineData<float>(CommandTypes::Add, 
         &EngineObjects->YPositions, EngineIdx, Y);
+}
+
 }

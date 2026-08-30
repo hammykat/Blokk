@@ -1,5 +1,7 @@
 #include "GameObject.hpp"
 
+namespace Blokk {
+
 void GameObject::SetFrameNum(uint32_t FrameNum)
 {
     UpdateEngineData<uint32_t>(
@@ -23,4 +25,6 @@ void GameObject::SetAnimation(string AnimName)
         EngineIdx,
         It->second
     );
+}
+
 }

@@ -6,17 +6,13 @@
 #include <vector>
 #include <string>
 
-
+namespace Blokk {
+    
 struct Range {
     int Start, End;
     size_t GetSize() {
         return End - Start + 1;
     }
-};
-
-enum CollisionBoxType {
-    CollisionRect,
-    CollisionCircle
 };
 
 struct Circle {
@@ -44,3 +40,4 @@ struct DynamicRegisterInfo {
     Vector2 Vel;
     size_t Idx;
 };
+}

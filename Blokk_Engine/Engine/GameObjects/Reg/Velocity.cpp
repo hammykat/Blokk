@@ -1,5 +1,7 @@
 #include "GameObject.hpp"
 
+namespace Blokk {
+
 // Set
 void GameObject::SetVelocity(float XVel, float YVel) 
 {
@@ -352,4 +354,6 @@ void GameObject::DivideVelocityX(float Vel) {
 }
 void GameObject::DivideVelocityY(float Vel) {
     DivideVelocity(1, Vel);
+}
+
 }

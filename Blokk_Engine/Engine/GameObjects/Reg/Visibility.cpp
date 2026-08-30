@@ -1,5 +1,7 @@
 /* #include "GameObject.hpp"
 
+namespace Blokk {
+
 // Set to visible
     void SetToVisible() // Assumes that the object was invisible before
     {
@@ -85,4 +87,7 @@ void ObjectManager::ToggleVisibility()
         // Set to visible
         SetToVsisible();
     }
-}  */
+}  
+    
+}
+*/
