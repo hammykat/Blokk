@@ -5,6 +5,7 @@ Before you use it, you need to `#define` specific things you want the engine to 
 * `Blokk_Visibility_CullType` - `0` for basic, `1` for axis ([more info](RenderCullingSystems.md))
 * `Blokk_Diagnostics` - Define for the engine to get diagnostics ([more info](Diagnostics.md))
 * `Blokk_CamEnabled` - Define for the engine to enable the camera ([more info](Camera.md))
+* `Blokk_Thread_Control` - Define to control the engine's threading([more info](ThreadControl.md))
 
 To use it, create a new instance off the `ObjectManager` class. 
 ```cpp
