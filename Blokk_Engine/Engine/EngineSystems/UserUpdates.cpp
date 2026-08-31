@@ -7,141 +7,84 @@
 
 namespace Blokk {
 
-void ObjectManager::DestroyObject(uint32_t ObjIdx) 
+void ObjectManager::DestroyStaticObject(uint32_t ObjIdx)
 {
-    // If object is static
-    if(ObjIdx >= DynamicObjectCount)
-    {
-        // Swap with the last item
-        SwapStaticObjects(ObjIdx, ObjectCount - 1);
+    // Swap with the last item
+    SwapStaticObjects(ObjIdx, ObjectCount - 1);
 
-        // Remove the object
-        XPositions.pop_back();
-        YPositions.pop_back();
-        ObjectInstances.pop_back();
+    // Remove the object
+    XPositions.pop_back();
+    YPositions.pop_back();
+    ObjectInstances.pop_back();
 
-        StaticObjectCount--;
-    }
-    else // If the object is dynamic 
-    {
-        // Swap with the last item
-        SwapDynamicObjects(ObjIdx, DynamicObjectCount - 1);
-
-        if(StaticObjectCount > 0)
-        {
-            // Swap with the last static item
-            SwapStaticObjects(DynamicObjectCount - 1, ObjectCount - 1);
-        }
-
-        // Remove the object from the back
-        XPositions.pop_back();
-        YPositions.pop_back();
-        XVelocities.pop_back();
-        YVelocities.pop_back();
-        ObjectInstances.pop_back();
-
-        DynamicObjectCount--;
-    }
-
+    StaticObjectCount--;
     ObjectCount--;
 }
 
-template <ConfiguredUpdateType T>
-void ObjectManager::ProcessFieldUpdateCommand(FieldUpdate<T> Command)
+void ObjectManager::DestroyDynamicObject(uint32_t ObjIdx) 
 {
-    switch(Command.Type) 
+    // Swap with the last item
+    SwapDynamicObjects(ObjIdx, DynamicObjectCount - 1);
+
+    if(StaticObjectCount > 0)
     {
-        case CommandTypes::Destroy:
-            DestroyObject(Command.Idx);
-            break;
-
-        case CommandTypes::Set:
-            (*Command.Vector)[Command.Idx] = Command.Value;
-            break;
-
-        case CommandTypes::Subtract:
-            (*Command.Vector)[Command.Idx] -= Command.Value;
-            break;
-
-        case CommandTypes::Add:
-            (*Command.Vector)[Command.Idx] += Command.Value;
-            break;
-
-        case CommandTypes::Multiply:
-            (*Command.Vector)[Command.Idx] *= Command.Value;
-            break;
-
-        case CommandTypes::Divide:
-            (*Command.Vector)[Command.Idx] /= Command.Value;
+        // Swap with the last static item
+        SwapStaticObjects(DynamicObjectCount - 1, ObjectCount - 1);
     }
+
+    // Remove the object from the back
+    XPositions.pop_back();
+    YPositions.pop_back();
+    XVelocities.pop_back();
+    YVelocities.pop_back();
+    ObjectInstances.pop_back();
+
+    DynamicObjectCount--;
+    ObjectCount--;
 }
 
-void ObjectManager::ProcessDoubleUpdateCommand(DoubleFieldUpdate<float> Command)
+void ObjectManager::ProcessAddCommand(Vector2 Velocity, Vector2 Position, GameObject* Object, bool Visible)
 {
-    switch(Command.Type) 
-    {
-        case CommandTypes::Set:
-            (*Command.XVector)[Command.Idx] = Command.XValue;
-            (*Command.YVector)[Command.Idx] = Command.YValue;
-            break;
-
-        case CommandTypes::Subtract:
-            (*Command.XVector)[Command.Idx] -= Command.XValue;
-            (*Command.YVector)[Command.Idx] -= Command.YValue;
-            break;
-
-        case CommandTypes::Add:
-            (*Command.XVector)[Command.Idx] += Command.XValue;
-            (*Command.YVector)[Command.Idx] += Command.YValue;
-            break;
-
-        case CommandTypes::Multiply:
-            (*Command.XVector)[Command.Idx] *= Command.XValue;
-            (*Command.YVector)[Command.Idx] *= Command.YValue;
-            break;
-
-        case CommandTypes::Divide:
-            (*Command.XVector)[Command.Idx] /= Command.XValue;
-            (*Command.YVector)[Command.Idx] /= Command.YValue;
-            break;
-
-        default:
-            break;
-    }
-}
-
-void ObjectManager::ProcessAddCommand(ObjectCreationParams Fields)
-{
-    float XVel = Fields.Velocity.x;
-    float YVel = Fields.Velocity.y;
+    float XVel = Velocity.x;
+    float YVel = Velocity.y;
 
     // If creating a static object
     if(XVel == 0 && YVel == 0)
     {
-        Fields.Object->EngineIdx = XPositions.size();
+        Object->EngineIdx = XPositions.size();
 
         // Add position
-        XPositions.push_back(Fields.Position.x);
-        YPositions.push_back(Fields.Position.y);
+        XPositions.push_back(Position.x);
+        YPositions.push_back(Position.y);
         
         // Add instance pointer
-        ObjectInstances.push_back(Fields.Object);
+        ObjectInstances.push_back(Object);
+
+        // Add visibility
+        IsVisible.push_back(Visible);
 
         StaticObjectCount++;
     } 
     else // If creating a dynamic object
     {
         // Add position
-        XPositions.push_back(Fields.Position.x);
-        YPositions.push_back(Fields.Position.y);
+        XPositions.push_back(Position.x);
+        YPositions.push_back(Position.y);
 
         // Add instance pointer
-        ObjectInstances.push_back(Fields.Object);
+        ObjectInstances.push_back(Object);
+
+        // Add visibility
+        IsVisible.push_back(Visible);
 
         if(StaticObjectCount > 0)
         {
             // Swap position with first static member to keep with dynamic object data
             SwapStaticObjects(DynamicObjectCount, ObjectCount - 1);
+        } 
+        else {
+            // Add index
+            Object->EngineIdx = DynamicObjectCount;
         }
 
         // Add velocity
@@ -154,6 +97,12 @@ void ObjectManager::ProcessAddCommand(ObjectCreationParams Fields)
     ObjectCount++;
 }
 
+
+void ObjectManager::ProcessAddCommand(ObjectCreationParams Fields)
+{
+    ProcessAddCommand(Fields.Velocity, Fields.Position, Fields.Object, Fields.Visible);
+}
+
 void ObjectManager::SwapStaticObjects(uint32_t Obj1, uint32_t Obj2)
 {
     // Swap X and Y
@@ -162,6 +111,9 @@ void ObjectManager::SwapStaticObjects(uint32_t Obj1, uint32_t Obj2)
 
     // Swap instance pointers
     std::swap(ObjectInstances[Obj1], ObjectInstances[Obj2]);
+
+    // Swap visibility
+    std::swap(IsVisible[Obj1], IsVisible[Obj2]);
 
     // Update object's internal vars
     ObjectInstances[Obj1]->EngineIdx = Obj1;
@@ -178,6 +130,8 @@ void ObjectManager::SwapDynamicObjects(uint32_t Obj1, uint32_t Obj2)
     std::swap(XVelocities[Obj1], XVelocities[Obj2]);
     std::swap(YVelocities[Obj1], YVelocities[Obj2]);
 
+    // Swap visibility
+    std::swap(IsVisible[Obj1], IsVisible[Obj2]);
 
     // Swap instance pointers
     std::swap(ObjectInstances[Obj1], ObjectInstances[Obj2]);
