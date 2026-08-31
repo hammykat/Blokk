@@ -21,14 +21,12 @@ class GameObject {
 
 public:
     friend class ObjectManager;
-    static inline ObjectManager *EngineObjects;
+    static inline ObjectManager *Engine;
 
     // Remembers where it is located in the engine's data
-    size_t EngineIdx;
+    uint32_t EngineIdx;
 
-    // Cache the update for faster updates
-    queue<FieldUpdate<float>>& EngineUpdates;
-    queue<DoubleFieldUpdate<float>>& EngineDoubleUpdates;
+    // Anim
     string CurrentAnim;
 
     // States
@@ -37,100 +35,66 @@ public:
     bool IsAnimated;
     bool IsCollidable;
 
-    GameObject(ObjectCreationParams CP = {{0, 0}, {0, 0}}) :
-        EngineUpdates(EngineObjects->FieldUpdateCommands),
-        EngineDoubleUpdates(EngineObjects->DoubleFieldUpdateCommands),
+    GameObject(ObjectCreationParams CP = {true, {0, 0}, {0, 0}}) :
         IsStatic(CP.Velocity.x == 0 && CP.Velocity.y == 0),
         EngineIdx(0),
         IsVisible(true)
     {
-        EngineObjects->Creations.push(CP);
+        Engine->ProcessAddCommand(CP);
+    }
+
+    GameObject(Vector2 Velocity, Vector2 Position, GameObject* Object, bool Visible = true) :
+        IsStatic(Velocity.x == 0 && Velocity.y == 0),
+        EngineIdx(0),
+        IsVisible(true)
+    {
+        Engine->ProcessAddCommand(Velocity, Position, Object, Visible);
+    }
+
+    ~GameObject()
+    {
+        // If static
+        if(IsStatic) {
+            Engine->DestroyStaticObject(EngineIdx);
+        } 
+        // If dynamic
+        else {
+            Engine->DestroyDynamicObject(EngineIdx);
+        }
     }
 
     // HELPERS -----------------------------------------------------
 
-    template <ConfiguredUpdateType T>
-    void UpdateEngineData(
-        CommandTypes Type, 
-        vector<T> *Values, 
-        T OtherVal,
-        uint32_t Idx 
-    ) {
-        if constexpr(std::is_same_v<T, float>) 
-        {
-            EngineUpdates.push(
-                FieldUpdate<float>{
-                    Type,
-                    Values,
-                    Idx,
-                    OtherVal
-                }
-            );
-        }
-        else if constexpr(std::is_same_v<T, uint32_t>) 
-        {
-            EngineUIntUpdates.push(
-                FieldUpdate<uint32_t>{
-                    Type,
-                    Values,
-                    Idx,
-                    OtherVal
-                }
-            );
-        }
-        else if constexpr(std::is_same_v<T, bool>) 
-        {
-            EngineBoolUpdates.push(
-                FieldUpdate<bool>{
-                    Type,
-                    Values,
-                    Idx,
-                    OtherVal
-                }
-            );
-        }
-    }
-    
-    void UpdateEngineData_Double(
-        CommandTypes Type, 
-        vector<float> *XVals, 
-        vector<float> *YVals, 
-        const float XUpdateVal,
-        const float YUpdateVal,
-        uint32_t Idx
-    ) {
-        EngineDoubleUpdates.push(
-            DoubleFieldUpdate<float>{
-                Type,
-                XVals, 
-                YVals,
-                XUpdateVal,
-                YUpdateVal,
-                Idx
-            }
-        );
-    }
-
-    // Set to static
+    // Set to static if dynamic
     void SetToStatic()
     {
         // Update internal var
         IsStatic = true;
 
-        // Remove from vel list
-        EngineObjects->IntoStatic.push(EngineIdx);
+        // Remove from dynamic, place at end of static
+        Engine->SwapDynamicObjects(EngineIdx, Engine->DynamicObjectCount - 1);
+        Engine->SwapStaticObjects(EngineIdx, Engine->ObjectCount - 1);
+
+        // Remove velocities
+        Engine->XVelocities.pop_back();
+        Engine->YVelocities.pop_back();
     }
 
-    // Set to dynamic
+    // Set to dynamic if static
     void SetToDynamic(Vector2 Vel)
     {
         // Update internal var
         IsStatic = false;
 
-        // Add to vel list
-        EngineObjects->IntoDynamic.push(
-            DynamicRegisterInfo{Vel, EngineIdx}
-        );
+        // Add to dynamic
+        Engine->SwapStaticObjects(EngineIdx, Engine->DynamicObjectCount);
+
+        // Add velocity
+        Engine->XVelocities.push_back(Vel.x);
+        Engine->YVelocities.push_back(Vel.y);
+
+        // Update engine's vars
+        Engine->DynamicObjectCount++;
     }
 
     // VELOCITY -----------------------------------------------------
@@ -222,7 +186,7 @@ public:
 
     void SetVisible(bool Vis);
 
-    // Getter for visibility is the member `IsVisible` directly; remove method to avoid name clash.
+    bool IsCurrentlyVisible();
 
     void ToggleVisibility();
 

@@ -1,66 +1,59 @@
-#include "GameObject.hpp"
+#include "GameObject.hpp" 
+ 
+namespace Blokk { 
+ 
+// Set 
+void GameObject::SetPosition(float TargetX, float TargetY)  
+{ 
+    // Update X and Y 
+    Engine->XPositions[EngineIdx] = TargetX;
+    Engine->YPositions[EngineIdx] = TargetY;
+} 
 
-namespace Blokk {
+void GameObject::SetPosition(Vector2 TargetPos) 
+{ 
+    SetPosition(TargetPos.x, TargetPos.y); 
+} 
+ 
+void GameObject::SetXPosition(float Target)  
+{ 
+    Engine->XPositions[EngineIdx] = Target;
+} 
 
-// Set
-void GameObject::SetPosition(float TargetX, float TargetY) 
-{
-    // Update X and Y
-    UpdateEngineData_Double(CommandTypes::Set, 
-            &EngineObjects->XPositions, 
-            &EngineObjects->YPositions,
-            TargetX, TargetY,
-            EngineIdx
-        );
-}
-void GameObject::SetPosition(Vector2 TargetPos) {
-    SetPosition(TargetPos.x, TargetPos.y);
-}
+void GameObject::SetYPosition(float Target)  
+{ 
+    Engine->YPositions[EngineIdx] = Target;
+} 
+ 
+// Get 
+Vector2 GameObject::GetPosition()  
+{ 
+    return Vector2( 
+        Engine->XPositions[EngineIdx], 
+        Engine->YPositions[EngineIdx] 
+    ); 
+} 
+ 
+// Change 
+void GameObject::ChangePosition(float ChangeX, float ChangeY)  
+{ 
+    Engine->XPositions[EngineIdx] += ChangeX;
+    Engine->YPositions[EngineIdx] += ChangeY;
+} 
 
-void GameObject::SetXPosition(float Target) 
-{
-    UpdateEngineData<float>(CommandTypes::Set, 
-            &EngineObjects->XPositions, EngineIdx, Target);
-}
-void GameObject::SetYPosition(float Target) 
-{
-    // Set
-    UpdateEngineData<float>(CommandTypes::Set, 
-            &EngineObjects->YPositions, EngineIdx, Target);
-}
+void GameObject::ChangePosition(Vector2 Change) 
+{ 
+    ChangePosition(Change.x, Change.y); 
+} 
+ 
+void GameObject::ChangeXPosition(float X)  
+{ 
+    Engine->XPositions[EngineIdx] += X;
+} 
 
-// Get
-Vector2 GameObject::GetPosition() 
-{
-    return Vector2(
-        EngineObjects->XPositions[EngineIdx],
-        EngineObjects->YPositions[EngineIdx]
-    );
-}
-
-// Change
-void GameObject::ChangePosition(float ChangeX, float ChangeY) 
-{
-    UpdateEngineData_Double(CommandTypes::Add, 
-        &EngineObjects->XPositions,
-        &EngineObjects->YPositions, 
-        ChangeX, ChangeY,
-        EngineIdx
-    );
-}
-void GameObject::ChangePosition(Vector2 Change) {
-    ChangePosition(Change.x, Change.y);
-}
-
-void GameObject::ChangeXPosition(float X) 
-{
-    UpdateEngineData<float>(CommandTypes::Add, 
-        &EngineObjects->XPositions, EngineIdx, X);
-}
-void GameObject::ChangeYPosition(float Y) 
-{
-    UpdateEngineData<float>(CommandTypes::Add, 
-        &EngineObjects->YPositions, EngineIdx, Y);
-}
-
+void GameObject::ChangeYPosition(float Y)  
+{ 
+    Engine->YPositions[EngineIdx] += Y;
+} 
+ 
 }

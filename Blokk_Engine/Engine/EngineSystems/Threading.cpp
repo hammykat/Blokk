@@ -23,27 +23,6 @@ double ObjectManager::TimeEngineProcesses()
             auto StartTime = std::chrono::steady_clock::now();
         #endif
 
-        // Process object creation commands
-        while (!Creations.empty())
-        {
-            ProcessAddCommand(Creations.front());
-            Creations.pop();
-        }
-
-        // Process single update commands
-        while (!FieldUpdateCommands.empty())
-        {
-            ProcessFieldUpdateCommand(FieldUpdateCommands.front());
-            FieldUpdateCommands.pop();
-        }
-
-        // Process double update commands
-        while (!DoubleFieldUpdateCommands.empty())
-        {
-            ProcessDoubleUpdateCommand(DoubleFieldUpdateCommands.front());
-            DoubleFieldUpdateCommands.pop();
-        }
-
         #ifdef Blokk_Diagnostics
             auto EndTime = std::chrono::steady_clock::now();
 

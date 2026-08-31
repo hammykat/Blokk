@@ -8,13 +8,8 @@ void GameObject::SetVelocity(float XVel, float YVel)
     // If being set to static
     if(XVel == 0 && YVel == 0) {
 
-        // If static
-        if(IsStatic) 
-        {
-            // Do nothing
-            return;
-        } 
-        else // If dynamic
+        // If Dynamic
+        if(!IsStatic) 
         {
             // Set to static
             SetToStatic();
@@ -31,18 +26,14 @@ void GameObject::SetVelocity(float XVel, float YVel)
         else // if dynamic
         {
             // Set X and Y
-            UpdateEngineData_Double(
-                CommandTypes::Set,
-                &EngineObjects->XVelocities,
-                &EngineObjects->YVelocities,
-                XVel,
-                YVel,
-                EngineIdx
-            );
+            Engine->XVelocities[EngineIdx] = XVel;
+            Engine->YVelocities[EngineIdx] = YVel;
         }
     }
 }
-void GameObject::SetVelocity(Vector2 Velocity) {
+
+void GameObject::SetVelocity(Vector2 Velocity) 
+{
     SetVelocity(Velocity.x, Velocity.y);
 }
 
@@ -67,12 +58,8 @@ void GameObject::SetVelocityX(float XVel)
             }
             else // If staying dynamic
             {
-                // Set X 
-                UpdateEngineData<float>(
-                    CommandTypes::Set,
-                    &EngineObjects->XVelocities,
-                    EngineIdx, XVel
-                );
+                // Set X
+                Engine->XVelocities[EngineIdx] = XVel;
             }
         }
     } 
@@ -86,12 +73,8 @@ void GameObject::SetVelocityX(float XVel)
         }
         else // If dynamic
         {
-            // Set X 
-            UpdateEngineData<float>(
-                CommandTypes::Set,
-                &EngineObjects->XVelocities,
-                EngineIdx, XVel
-            );
+            // Set X
+            Engine->XVelocities[EngineIdx] = XVel;
         }
     }
 }
@@ -117,12 +100,8 @@ void GameObject::SetVelocityY(float YVel)
             }
             else // If staying dynamic
             {
-                // Set X 
-                UpdateEngineData<float>(
-                    CommandTypes::Set,
-                    &EngineObjects->YVelocities,
-                    EngineIdx, YVel
-                );
+                // Set Y
+                Engine->YVelocities[EngineIdx] = YVel;
             }
         }
     } 
@@ -132,16 +111,12 @@ void GameObject::SetVelocityY(float YVel)
         if(IsStatic) 
         {
             // Set to dynamic with vel
-            SetToDynamic(Vector2(YVel, 0));
+            SetToDynamic(Vector2(0, YVel));
         }
         else // If dynamic
         {
-            // Set X 
-            UpdateEngineData<float>(
-                CommandTypes::Set,
-                &EngineObjects->YVelocities,
-                EngineIdx, YVel
-            );
+            // Set Y
+            Engine->YVelocities[EngineIdx] = YVel;
         }
     }
 }
@@ -149,7 +124,7 @@ void GameObject::SetVelocityY(float YVel)
 // Get
 Vector2 GameObject::GetVelocity() 
 {
-    // If the obejct is static
+    // If the object is static
     if(IsStatic)
     {
         // Give the static velocity (Always 0)
@@ -159,11 +134,12 @@ Vector2 GameObject::GetVelocity()
     {
         // Get the velocity from the manager
         return {
-            EngineObjects->XVelocities[EngineIdx], 
-            EngineObjects->YVelocities[EngineIdx]
+            Engine->XVelocities[EngineIdx], 
+            Engine->YVelocities[EngineIdx]
         };
     }
 }
+
 float GameObject::GetVelocityX() 
 {
     // If the object is static
@@ -174,10 +150,12 @@ float GameObject::GetVelocityX()
     else // If the object is dynamic
     {
         // Get the vel from the manager's data
-        return EngineObjects->XVelocities[EngineIdx];
+        return Engine->XVelocities[EngineIdx];
     }
 }
-float GameObject::GetVelocityY() {
+
+float GameObject::GetVelocityY() 
+{
     // If the object is static
     if(IsStatic)
     {
@@ -186,7 +164,7 @@ float GameObject::GetVelocityY() {
     else // If the object is dynamic
     {
         // Get the vel from the manager's data
-        return EngineObjects->YVelocities[EngineIdx];
+        return Engine->YVelocities[EngineIdx];
     }
 }
 
@@ -196,17 +174,20 @@ float GameObject::GetSpeed()
     // If static return 0, not moving
     if(IsStatic) return 0;
 
-    float XVel = EngineObjects->XVelocities[EngineIdx];
-    float YVel = EngineObjects->YVelocities[EngineIdx];
+    float XVel = Engine->XVelocities[EngineIdx];
+    float YVel = Engine->YVelocities[EngineIdx];
+
     return sqrt(XVel * XVel + YVel * YVel);
 }
+
 float GameObject::GetSpeedSquared() 
 {
     // If static return 0, not moving
     if(IsStatic) return 0;
 
-    float XVel = EngineObjects->XVelocities[EngineIdx];
-    float YVel = EngineObjects->YVelocities[EngineIdx];
+    float XVel = Engine->XVelocities[EngineIdx];
+    float YVel = Engine->YVelocities[EngineIdx];
+
     return XVel * XVel + YVel * YVel;
 }
 
@@ -217,8 +198,9 @@ bool GameObject::IsMoving()
 }
 
 // Stop, set to 0
-void GameObject::StopVelocity() {
-    // Remove it's idx if present
+void GameObject::StopVelocity() 
+{
+    // Remove its idx if present
     if(IsStatic)
     {
         return;
@@ -236,28 +218,27 @@ void GameObject::ReverseVelocity()
     // If static do nothing
     if(IsStatic) return;
 
-    // Reverse X
-    UpdateEngineData<float>(CommandTypes::Multiply, 
-        &EngineObjects->XVelocities, EngineIdx, -1);
-    // Reverse Y
-    UpdateEngineData<float>(CommandTypes::Multiply, 
-        &EngineObjects->YVelocities, EngineIdx, -1);
+    // Reverse X and Y
+    Engine->XVelocities[EngineIdx] *= -1;
+    Engine->YVelocities[EngineIdx] *= -1;
 }
+
 void GameObject::ReverseVelocityX() 
 {
     // If static do nothing
     if(IsStatic) return;
 
-    UpdateEngineData<float>(CommandTypes::Multiply, 
-        &EngineObjects->XVelocities, EngineIdx, -1);
+    // Reverse X
+    Engine->XVelocities[EngineIdx] *= -1;
 }
+
 void GameObject::ReverseVelocityY() 
 {
     // If static do nothing
     if(IsStatic) return;
 
-    UpdateEngineData<float>(CommandTypes::Multiply, 
-        &EngineObjects->YVelocities, EngineIdx, -1);
+    // Reverse Y
+    Engine->YVelocities[EngineIdx] *= -1;
 }
 
 // Multiply ------------------------------------------------
@@ -279,27 +260,28 @@ void GameObject::MultiplyVelocity(float FactorX, float FactorY)
     }
 
     // Update data
-    UpdateEngineData_Double(
-        CommandTypes::Multiply,
-        &EngineObjects->XVelocities,
-        &EngineObjects->YVelocities,
-        FactorX,
-        FactorY,
-        EngineIdx
-    );
+    Engine->XVelocities[EngineIdx] *= FactorX;
+    Engine->YVelocities[EngineIdx] *= FactorY;
 }
-void GameObject::MultiplyVelocity(Vector2 Factor) {
+
+void GameObject::MultiplyVelocity(Vector2 Factor) 
+{
     MultiplyVelocity(Factor.x, Factor.y);
 }
-void GameObject::MultiplyVelocity(float Factor) {
+
+void GameObject::MultiplyVelocity(float Factor) 
+{
     MultiplyVelocity(Factor, Factor);
 }
 
 // Individual
-void GameObject::MultiplyXVelocity(float Factor) {
+void GameObject::MultiplyXVelocity(float Factor) 
+{
     MultiplyVelocity(Factor, 1);
 }
-void GameObject::MultiplyYVelocity(float Factor) {
+
+void GameObject::MultiplyYVelocity(float Factor) 
+{
     MultiplyVelocity(1, Factor);
 }
 
@@ -318,16 +300,14 @@ void GameObject::AddVelocity(float XVel, float YVel)
     }
     else // If the object is dynamic
     {
-        // Add 
-        UpdateEngineData_Double(CommandTypes::Add, 
-            &EngineObjects->XVelocities, 
-            &EngineObjects->YVelocities,
-            XVel, YVel,
-            EngineIdx
-        ); 
+        // Add
+        Engine->XVelocities[EngineIdx] += XVel;
+        Engine->YVelocities[EngineIdx] += YVel;
     }
 }
-void GameObject::AddVelocity(Vector2 Vel) {
+
+void GameObject::AddVelocity(Vector2 Vel) 
+{
     AddVelocity(Vel.x, Vel.y);
 }
 
@@ -338,21 +318,23 @@ void GameObject::DivideVelocity(float XVel, float YVel)
     // Avoid bugs with dividing by 0
     if(XVel == 0 || YVel == 0 || IsStatic) return;
 
-    // Divide 
-    UpdateEngineData_Double(CommandTypes::Divide, 
-        &EngineObjects->XVelocities, 
-        &EngineObjects->YVelocities,
-        XVel, YVel, EngineIdx
-    );
+    // Divide
+    Engine->XVelocities[EngineIdx] /= XVel;
+    Engine->YVelocities[EngineIdx] /= YVel;
 }
-void GameObject::DivideVelocity(Vector2 Vel) {
+
+void GameObject::DivideVelocity(Vector2 Vel) 
+{
     DivideVelocity(Vel.x, Vel.y);
 }
 
-void GameObject::DivideVelocityX(float Vel) {
+void GameObject::DivideVelocityX(float Vel) 
+{
     DivideVelocity(Vel, 1);
 }
-void GameObject::DivideVelocityY(float Vel) {
+
+void GameObject::DivideVelocityY(float Vel) 
+{
     DivideVelocity(1, Vel);
 }
 

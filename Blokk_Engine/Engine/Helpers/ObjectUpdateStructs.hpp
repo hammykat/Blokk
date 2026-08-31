@@ -18,36 +18,11 @@ enum class CommandTypes {
 };
 
 
-// Updates 
-
-template <typename T>
-concept ConfiguredUpdateType =
-    std::same_as<T, uint32_t> ||
-    std::same_as<T, float> ||
-    std::same_as<T, bool>;
-
-template<ConfiguredUpdateType T>
-struct FieldUpdate {
-    CommandTypes Type;
-    std::vector<T>* Vector;
-    uint32_t Idx;
-    T Value;
-};
-
-template <ConfiguredUpdateType T>
-struct DoubleFieldUpdate {
-    CommandTypes Type;
-    std::vector<T> *XVector;
-    std::vector<T> *YVector;
-    T XValue;
-    T YValue;
-    uint32_t Idx;
-};
-
 // Creation
 
 struct ObjectCreationParams 
 {
+    bool Visible = false;
     Vector2 Position;
     Vector2 Velocity;
     GameObject *Object;
