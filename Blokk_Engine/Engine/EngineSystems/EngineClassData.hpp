@@ -36,18 +36,19 @@
 #include "ObjectUpdateStructs.hpp"
 #include "SIMD_Finder.hpp"
 
+namespace Blokk
+{
+
 struct IndexRange
 {
     uint32_t Start, End;
 
-    uint32_t GetSize()
+    uint32_t GetSize() const
     {
         return End - Start;
     }
 };
 
-namespace Blokk
-{
     class ObjectManager;
     class GameObject;
 
@@ -146,11 +147,11 @@ namespace Blokk
                 );
             }
 
-            // Open starting thread
-            OpenThread();
-
             // Set the worker's manager
             Worker::Manager = this;
+
+            // Open starting thread
+            OpenThread();
 
             // Get the proper functions
             GetFunctions();
@@ -170,18 +171,22 @@ namespace Blokk
         {
             for (auto Idx : RenderObjectIdxs)
             {
+                // SKip if object isn't visible
+                if(!IsVisible[Idx]) continue;
+
                 uint32_t Anim = AnimNums[Idx];
                 uint32_t FrameCount = AnimFrameCounts[Anim];
 
+                // If animation empty
                 if (FrameCount == 0)
                     continue;
 
                 uint32_t Frame = FrameNums[Idx] % FrameCount;
                 Texture2D Texture = Frames[Anim][Frame];
 
-                #ifdef Blokk_CamEnabled
-                    int32_t x = XPositions[Idx] + CameraX;
-                    int32_t y = YPositions[Idx] + CameraY;
+                #ifdef Blokk_CamEnabled // Camera offsets
+                    int32_t x = XPositions[Idx] - CameraX;
+                    int32_t y = YPositions[Idx] - CameraY;
                 #else
                     int32_t x = XPositions[Idx];
                     int32_t y = YPositions[Idx];
@@ -481,13 +486,9 @@ namespace Blokk
         // Pointers to object instances
         std::vector<GameObject*> ObjectInstances;
 
-        // Update commands
-        std::queue<FieldUpdate<float>> FieldUpdateCommands;
-        std::queue<DoubleFieldUpdate<float>> DoubleFieldUpdateCommands;
-        std::queue<ObjectCreationParams> Creations;
-
-        std::queue<DynamicRegisterInfo> IntoDynamic;
+        // Updating velocity stuff
         std::queue<uint32_t> IntoStatic;
+        std::queue<uint32_t> IntoDynamic;
 
         // Rendering
         std::vector<uint32_t> RenderObjectIdxs;
@@ -641,7 +642,8 @@ namespace Blokk
         void SwapDynamicObjects(uint32_t Obj1, uint32_t Obj2);
 
         // Destroy an object
-        void DestroyObject(uint32_t ObjIdx);
+        void DestroyDynamicObject(uint32_t ObjIdx);
+        void DestroyStaticObject(uint32_t ObjIdx);
 
         // POSITIONS W/ VELS -----------------------------------------
 
@@ -683,20 +685,10 @@ namespace Blokk
 
         CheckVisibleRangeFnPtr CheckVisibleRange;
 
-        // Updates ----------------------------------------------------
+        // Adding objects ----------------------------------------------------
 
-        template <ConfiguredUpdateType T>
-        void ProcessFieldUpdateCommand(
-            FieldUpdate<T> Command
-        );
-
-        void ProcessAddCommand(
-            ObjectCreationParams Fields
-        );
-
-        void ProcessDoubleUpdateCommand(
-            DoubleFieldUpdate<float> Command
-        );
+        void ProcessAddCommand(ObjectCreationParams Fields);
+        void ProcessAddCommand(Vector2 Velocity, Vector2 Position, GameObject* Object, bool Visible);
 
         // Frame increment --------------------------------------------
 
