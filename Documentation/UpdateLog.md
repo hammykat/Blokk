@@ -1,3 +1,65 @@
+# Blokk v0.1.6
+> 8/31/2026
+
+## Update Notes
+
+### Major Changes
+
+* **Removed the internal field update command queues**
+
+  * Object data is now updated directly instead of being passed through update queues.
+  * Removed the associated queue variables, functions, and processing implementations.
+  * Simplifies the engine's internal update system and reduces unnecessary intermediate work.
+
+* **Reworked object destruction**
+
+  * Replaced the previous `DestroyObject` implementation with separate:
+
+    * `DestroyDynamicObject`
+    * `DestroyStaticObject`
+  * Improved handling of objects stored in static and dynamic data.
+  * Fixed object data and index handling when objects are moved between storage types.
+
+* **Improved static/dynamic object management**
+
+  * Fixed logic for switching objects between static and dynamic storage.
+  * Added visibility handling to object swapping and creation operations.
+  * Fixed a bug where creating a dynamic object when no static objects existed could leave its internal index incorrect.
+
+### Visibility
+
+* Added a new visibility implementation with direct engine data manipulation.
+* Added visibility support to object creation parameters.
+* Added a `Visible` field to `ObjectCreationParams`.
+* Updated visibility-related object operations to work with the new direct data system.
+
+### Engine Internals
+
+* Renamed the internal `EngineObjects` variable to `Engine`.
+* Changed its type from `size_t` to `uint32_t`.
+* Added a destructor to improve cleanup when the engine/project is destroyed.
+* Added the `IndexRange` structure to the `Blokk` namespace.
+* Made `IndexRange::GetSize()` `const`.
+
+### Threading
+
+* Adjusted thread initialization so the worker's static `ObjectManager` reference is set **before** opening the worker thread.
+* This fixes initialization ordering and makes the worker setup more reliable.
+
+### Rendering
+
+* Fixed a rendering offset issue where positions were being offset in the wrong direction.
+
+## Cleanup
+
+* Removed obsolete update queue implementations.
+* Removed old field update command processing.
+* Consolidated duplicate `ProcessAddCommand` implementations.
+* Removed internal functions that were only required by the previous queue-based update system.
+
+Overall, **v0.1.6 simplifies Blokk's internal data flow, improves object management, and lays the groundwork for more direct and efficient engine updates.**
+
+
 # v0.1.5
 > 8/30/2026
 
