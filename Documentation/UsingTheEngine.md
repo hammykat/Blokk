@@ -7,9 +7,10 @@ Before you use it, you need to `#define` specific things you want the engine to 
 * `Blokk_CamEnabled` - Define for the engine to enable the camera ([more info](Camera.md))
 * `Blokk_Thread_Control` - Define to control the engine's threading ([more info](ThreadControl.md))
 
+Most things are defined under the 'Blokk' namespace.
 To use it, create a new instance off the `ObjectManager` class. 
 ```cpp
-ObjectManager MyManager(CreationParams);
+Blokk::ObjectManager MyManager(CreationParams);
 ```
 Here, you pass a struct called `ManagerCreation`, which looks like:
 ```cpp
@@ -25,7 +26,7 @@ The 2 most important functions are:
 * `RenderObjects();` - Use to render all the objects
 * `EngineProcesses();` - Use to let the engien update all the data
 
-Using the engine has the same basic structure as a raylib project. 
+Using the engine has the same basic structure as a raylib project. You should familiarize yourself with raylib before using the engine, or you can use the engine with any other game engine framework, but **the rendering only works with raylib**. Therefore, you can use the engine to handle the object data and render the objects yourself.
 Here's an example template (You can also find it [here](../Example%20Projects/Template.cpp)):
 
 ```cpp
