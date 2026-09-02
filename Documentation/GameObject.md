@@ -7,13 +7,9 @@ With the instance created, you can then call it's functions normally like any cl
 For a list of the functions, check the [function list](GameObjectFunctions.md)
 To take a deeper dive on how the engine handles objects, check the [engine documentation](EngineArchitecture.md)
 
-### Note:
-**Changing an object's data will only actually change it the next frame.**
-This is because of how the engine is structured: The object needs to send a message to the engine, and the engine processes the message at the start of the next frame.
+If you do this:
 
-So, if you do this:
-
-`cpp
+```cpp
 
 GameObject MyObject = new();
 
@@ -21,6 +17,6 @@ MyObject.SetVelocity(Vector2{5, 6});
 
 std::cout << MyObject.GetVelocityX();
 
-`
+```
 
-The output will be 0 because the engine actually updates the object's data at the start of the next frame.
+The output will be 5 because the object directly reads and mutates the engine's data.
