@@ -1,32 +1,19 @@
-add_library(Blokk
-    EngineClassData.hpp
+cmake_minimum_required(VERSION 3.25)
 
-    # Engine systems
-    IncrementFrames.cpp
-    Velocities.cpp
-    Visibility_BasicCulling.cpp
-    Visibility_AxisCulling.cpp
-    UserUpdates.cpp
-    Animations.cpp
-    Threading.hpp
-    Threading.cpp
-
-    # GameObjects
-    ../GameObjects/Reg/Frames+Animation.cpp
-    ../GameObjects/Reg/Position.cpp
-    ../GameObjects/Reg/Velocity.cpp
-    ../GameObjects/Reg/Visibility.cpp
+project(Blokk
+    VERSION 0.1.6
+    LANGUAGES CXX
 )
 
-target_include_directories(Blokk PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../Helpers
-    ${CMAKE_CURRENT_SOURCE_DIR}/../GameObjects/Reg
-    ${CMAKE_CURRENT_SOURCE_DIR}/../Errors
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-    # Public Blokk headers
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Include
+# SDL
+add_subdirectory(vendored/SDL)
 
-    # Raylib
-    ${CMAKE_SOURCE_DIR}/External/RayLibInclude
-)
+# Blokk engine
+add_subdirectory(Blokk_Engine/Engine/EngineSystems)
+
+# Link SDL
+target_link_libraries(Blokk PRIVATE SDL3::SDL3)
