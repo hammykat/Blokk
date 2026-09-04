@@ -1,13 +1,12 @@
 # The background engine architecture
 
 The Blokk engine is the part of the engine that handles GameObjects for you every frame.
+It is designed
 It uses systems, which are currently:
 
 - Movement with Velocity and Collisions
 - Animations
-- Visibility / Rendering
-
-## Parallelism
+- Visibility, Rendering, Culling (Configurable)
 
 ## Parallelism
 
@@ -15,13 +14,15 @@ Blokk uses multiple worker threads to parallelize engine processing.
 
 When the engine starts, it determines the available CPU resources and initializes its worker threads. These threads remain active throughout the lifetime of the engine rather than being repeatedly created and destroyed during individual frames.
 
+### Adaptive Timing
+
 At the beginning of each frame, the main thread determines how the current workload should be divided. The object's data is split into **non-overlapping ranges of indexes**, and each worker thread is assigned a range to process.
 
 For example, with 4 worker threads, the object data may be divided into:
 
 | Thread | Assigned Range |
 |--------|----------------|
-| Thread 1 | 0 - 249 |
+| Thread 1 | 0 - 249   |
 | Thread 2 | 250 - 499 |
 | Thread 3 | 500 - 749 |
 | Thread 4 | 750 - 999 |
@@ -48,6 +49,15 @@ Wait for all threads
 Process next System
     ↓
 Repeat
+```
+
+### Fixed Count
+
+With this system, you can control the thread count yourself, and you can decide how many threads to open, destroy, etc.
+The engine will continue to distribute work across threads, but it won't use it's adaptive timing system and will not open/destroy threads.
+
+> **Note**:
+> You should avoid the creation/destruction of threads every frame as it's expensive
 
 ## SIMD
 
