@@ -12,7 +12,7 @@ int main()
 
     // Create an ObjectManager
     Blokk::ManagerCreation CreationParams{
-        Vector2{1280, 720},
+        Blokk::Vector2{1280, 720},
         60
     };
 

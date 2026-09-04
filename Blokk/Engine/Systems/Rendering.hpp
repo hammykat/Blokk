@@ -303,6 +303,6 @@ public:
     }
 };
 
-#endif
+#endif // Blokk_Rendering_Enabled
 
 }

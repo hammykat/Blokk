@@ -155,6 +155,9 @@ namespace Blokk
                 );
             }
 
+            // Set the gameobject's manager
+            GameObject::Engine = this;
+
             // Set the worker's manager
             Worker::Manager = this;
 
@@ -346,41 +349,57 @@ namespace Blokk
         class CameraController
         {
             public:
+
+            int32_t GetXPosition() const
+            {
+                return x;
+            }
+
+            int32_t GetYPosition() const
+            {
+                return y;
+            }
+
             void SetPosition(int32_t X, int32_t Y)
             {
-                CameraX = X;
-                CameraY = Y;
+                x = X;
+                y = Y;
             }
             
             void SetPosition(Vector2 Pos)
             {
-                CameraX = Pos.x;
-                CameraY = Pos.y;
+                x = Pos.x;
+                y = Pos.y;
             }
             
             void SetXPosition(int32_t X)
             {
-                CameraX = X;
+                x = X;
             }
             
             void SetYPosition(int32_t Y)
             {
-                CameraY = Y;
+                y = Y;
             }
             
             void ChangeXPosition(int32_t X)
             {
-                CameraX += X;
+                x += X;
             }
             
             void ChangeYPosition(int32_t Y)
             {
-                CameraY += Y;
+                y += Y;
             }
+
+            private:
+
+            int32_t x;
+            int32_t y;
         };
         
         CameraController Camera;
-        
+
         #endif
 
         #ifdef Blokk_Thread_Control
@@ -427,9 +446,6 @@ namespace Blokk
         // Camera
         #ifdef Blokk_CamEnabled
 
-        int32_t CameraX;
-        int32_t CameraY;
-
         CameraController Camera;
 
         #endif
@@ -448,7 +464,7 @@ namespace Blokk
         std::vector<CollisionHit> Collisions;
 
         // Animations
-        #ifdef Blokk_Animations_Enabled
+        #ifdef Blokk_Rendering_Enabled
 
         std::vector<uint32_t> FrameNums;
         std::vector<uint32_t> AnimNums;
