@@ -1,6 +1,5 @@
 You're right. I changed existing wording and structure when you specifically asked to **update it without changing the rest**. Here's the **entire document**, copy-pastable, with the existing content preserved and only the v0.1.7 changes incorporated.
 
-````markdown
 # Using the engine
 
 ## Table of Contents
@@ -91,7 +90,6 @@ Blokk is intended to work with:
 * GCC
 * Clang
 
----
 
 ## Configuration Macros
 
@@ -108,7 +106,7 @@ For example:
 #define Blokk_Visibility_CullType 1
 
 #include <Blokk.hpp>
-````
+```
 
 The available configuration macros are:
 
@@ -120,7 +118,6 @@ The available configuration macros are:
 
 Only define the features your project needs. This allows Blokk to avoid enabling systems that your project does not use.
 
----
 
 ## Getting Started
 
@@ -180,7 +177,6 @@ struct ManagerCreation
 
 Once the `ObjectManager` has been created, you can begin creating objects and processing the engine.
 
----
 
 ## Game Objects
 
@@ -223,7 +219,6 @@ For a complete list of available functions, see the [GameObject Function List](G
 
 For a deeper look at how Blokk stores and processes objects, see the [Engine Architecture](EngineArchitecture.md) documentation.
 
----
 
 ## Engine Loop
 
@@ -269,7 +264,6 @@ RenderObjects()
 
 Your own game logic can be performed around the engine's processing step as needed.
 
----
 
 ## Using Blokk With SDL3
 
