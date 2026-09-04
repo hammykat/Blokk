@@ -9,12 +9,45 @@ It uses systems, which are currently:
 
 ## Parallelism
 
-The engine will open threads according to the workload.
-The engine decides this by timing how long it takes to execute all the systems. It'll first get the frame time and then get the optimal time (Around **80% of the total** frame time). Then, it'll time it's processes, and compare it to the optimal frame time. If it surpasses it, it'll open another thread (If any are available) to distribute the workload with. The next frame, it'll compare the previous frame time to the current frame time, and if it surpasses that or is equal to it, it'll destroy the previously created thread, as it didn't offer any performance difference. **The engine will then know that it reached the optimal thread count and will stop creating/destroying threads.**
+## Parallelism
 
-At the start of the program, the engine will only open up one thread, and keep creating more if it needs like explained above. The engine has to synchronize multiple vectors containing data to  store the right data for each object. Each thread is assigned a specific **range of indexes** to iterate over (With SIMD), which are unique, which eliminates the need for concurrent data structures, as **they will not edit the same range at the same time**. The engine will execute one system at a time, and will move on to the next after one is finished **in a fixed order**, which is needed as some systems have to be executed before others (Like movement is dependent on updating velocity, or how collisions use movement).
+Blokk uses multiple worker threads to parallelize engine processing.
 
-The engine splits the workload across all threads by **assigning ranges** (determined at the **start of the frame** by the main thread) to each thread. Then, it assigns the threads their ranges and the function, and then waits for the threads to finish. 
+When the engine starts, it determines the available CPU resources and initializes its worker threads. These threads remain active throughout the lifetime of the engine rather than being repeatedly created and destroyed during individual frames.
+
+At the beginning of each frame, the main thread determines how the current workload should be divided. The object's data is split into **non-overlapping ranges of indexes**, and each worker thread is assigned a range to process.
+
+For example, with 4 worker threads, the object data may be divided into:
+
+| Thread | Assigned Range |
+|--------|----------------|
+| Thread 1 | 0 - 249 |
+| Thread 2 | 250 - 499 |
+| Thread 3 | 500 - 749 |
+| Thread 4 | 750 - 999 |
+
+Because each thread receives a unique range, two threads do not modify the same object data at the same time. This allows the engine to avoid unnecessary concurrent data structures for these operations.
+
+The engine processes one system at a time. Once all threads have finished the current system, the engine moves on to the next system.
+
+The order of systems is fixed because some systems depend on the results of earlier systems. For example, collision processing may depend on updated movement data.
+
+The general process is:
+
+```text
+Start Frame
+    ↓
+Determine workload ranges
+    ↓
+Assign ranges to worker threads
+    ↓
+Process System
+    ↓
+Wait for all threads
+    ↓
+Process next System
+    ↓
+Repeat
 
 ## SIMD
 
