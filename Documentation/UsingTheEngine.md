@@ -2,95 +2,190 @@
 
 ## Table of Contents
 
-* Engine Requirements
-* Configuration Macros
-* Engine
+* [Engine Requirements](#engine-requirements)
 
-## Requirements
+  * [Platform Support](#platform-support)
+  * [CPU](#cpu)
+  * [Memory](#memory)
+  * [Graphics](#graphics)
+  * [Development Requirements](#development-requirements)
+  * [Supported Compilers](#supported-compilers)
+* [Configuration Macros](#configuration-macros)
+* [Getting Started](#getting-started)
+
+  * [Including Blokk](#including-blokk)
+  * [Creating an ObjectManager](#creating-an-objectmanager)
+* [Game Objects](#game-objects)
+
+  * [Creating Objects](#creating-objects)
+  * [Modifying Objects](#modifying-objects)
+* [Engine Loop](#engine-loop)
+* [Using Blokk With Raylib](#using-blokk-with-raylib)
+* [Using Blokk Without Raylib Rendering](#using-blokk-without-raylib-rendering)
+* [Example Template](#example-template)
+* [Next Steps](#next-steps)
+
+---
+
+## Engine Requirements
 
 ### Platform Support
 
 | Platform            | Architecture | Status      |
 | ------------------- | ------------ | ----------- |
 | Windows             | x86-64       | Supported   |
-| Linux               | x86-64       | Untested      |
-| macOS Intel         | x86-64       | Untested      |
+| Linux               | x86-64       | Untested    |
+| macOS Intel         | x86-64       | Untested    |
 | macOS Apple Silicon | ARM64        | Unsupported |
 | Linux ARM64         | ARM64        | Unsupported |
 | Windows ARM64       | ARM64        | Unsupported |
 
 ### CPU
 
-- x86-64 processor
-- SSE2 support required
-- AVX2 supported
-- AVX-512 supported
-- AVX is not supported
-- ARM NEON is not supported
+Blokk currently targets x86-64 processors.
+
+* x86-64 processor
+* SSE2 support required
+* AVX2 supported
+* AVX-512 supported
+* AVX is not supported
+* ARM NEON is not supported
+
+Blokk uses SIMD instructions where supported to improve performance. SSE2 is currently required, while AVX2 and AVX-512 can provide additional optimization on compatible processors.
 
 ### Memory
 
 No fixed minimum has been established yet.
-Required memory depends on the application, asset sizes, and object count.
 
-- Recommended Minimum: 4 GB RAM
+Required memory depends on the application, asset sizes, and number of objects being managed.
+
+* Recommended minimum: 4 GB RAM
 
 ### Graphics
 
-- GPU with Raylib-supported graphics API
-- Hardware-accelerated graphics recommended
+Blokk's built-in rendering system uses Raylib.
+
+* GPU with a Raylib-supported graphics API
+* Hardware-accelerated graphics recommended
+
+If you are using a different rendering framework, Blokk can still be used for its object and engine systems. See [Using Blokk Without Raylib Rendering](#using-blokk-without-raylib-rendering).
 
 ### Development Requirements
 
-- C++20-compatible compiler
-- CMake
-- Git
+To develop with Blokk, you will need:
+
+* C++20-compatible compiler
+* CMake
+* Git
+* Raylib
 
 ### Supported Compilers
 
-- MSVC
-- GCC
-- Clang
+Blokk is intended to work with:
 
+* MSVC
+* GCC
+* Clang
+
+---
 
 ## Configuration Macros
 
-Using the engine is made to be as easy as possible. 
-Before you use it, you need to `#define` specific things you want the engine to do **before** including the engine:
-* `Blokk_Visibility_CullType` - `0` for basic, `1` for axis ([more info](RenderCullingSystems.md))
-* `Blokk_Diagnostics` - Define for the engine to get diagnostics ([more info](Diagnostics.md))
-* `Blokk_CamEnabled` - Define for the engine to enable the camera ([more info](Camera.md))
-* `Blokk_Thread_Control` - Define to control the engine's threading ([more info](ThreadControl.md))
+Blokk provides several compile-time configuration options. These allow you to enable or select engine features before the engine is included.
 
-## Engine
+Configuration macros **must be defined before including Blokk**.
 
-> Most things in the engine are defined under the 'Blokk' namespace.
+For example:
 
-After defining the wanted configuration macros, create a new instance off the `ObjectManager` class. 
 ```cpp
+#define Blokk_Diagnostics
+#define Blokk_CamEnabled
+#define Blokk_Visibility_CullType 1
+
+#include <Blokk.hpp>
+```
+
+The available configuration macros are:
+
+* `Blokk_Visibility_CullType` - Selects the visibility-culling system. `0` uses basic culling and `1` uses axis culling. See [Render Culling Systems](RenderCullingSystems.md).
+* `Blokk_Diagnostics` - Enables engine diagnostics. See [Diagnostics](Diagnostics.md).
+* `Blokk_CamEnabled` - Enables the camera system. See [Camera](Camera.md).
+* `Blokk_Thread_Control` - Enables manual control over the engine's threading system. See [Thread Control](ThreadControl.md).
+
+Only define the features your project needs. This allows Blokk to avoid enabling systems that your project does not use.
+
+---
+
+## Getting Started
+
+Once Blokk is configured, you can begin using the engine in your project.
+
+Most Blokk classes and functions are contained within the `Blokk` namespace.
+
+```cpp
+#include <Blokk.hpp>
+```
+
+### Including Blokk
+
+Include Blokk after defining any configuration macros you want to use:
+
+```cpp
+#define Blokk_Diagnostics
+
+#include <Blokk.hpp>
+```
+
+If you are using Blokk's built-in rendering system, you will also need Raylib:
+
+```cpp
+#include <Blokk.hpp>
+#include "raylib.h"
+```
+
+### Creating an ObjectManager
+
+The `ObjectManager` is the main interface for managing objects and running the engine.
+
+Create an instance by passing a `ManagerCreation` structure:
+
+```cpp
+Blokk::ManagerCreation CreationParams{
+    Vector2{1280, 720},
+    60
+};
+
 Blokk::ObjectManager MyManager(CreationParams);
 ```
-Here, you pass a struct called `ManagerCreation`, which looks like:
+
+`ManagerCreation` contains the basic information the engine needs when starting:
+
 ```cpp
 struct ManagerCreation 
 {
-    Vector2 ScreenDimensions; // Screen dimensions (used for rendering)
-    uint32_t FPS = 30; // FPS, defaults to 30 (used for default timing)
+    Vector2 ScreenDimensions;
+    uint32_t FPS = 30;
 };
 ```
 
-Then, you can start using the manager!
-The 2 most important functions are:
-* `RenderObjects();` - Use to render all the objects
-* `EngineProcesses();` - Use to let the engien update all the data
+* `ScreenDimensions` - The dimensions of the screen used by the rendering system.
+* `FPS` - The target FPS used for the engine's default timing. Defaults to `30`.
 
-Using the engine has the same basic structure as a raylib project. You should familiarize yourself with raylib before using the engine, or you can use the engine with any other game engine framework, but **the rendering only works with raylib**. Therefore, if you're using something other than raylib, you can use the engine to handle the object data and render the objects yourself.
+Once the `ObjectManager` has been created, you can begin creating objects and processing the engine.
+
+---
 
 ## Game Objects
 
-Creating a game object is creating an instance of the class. While creating the instance, you can specify certain starting values, like the position and velocity, in the form of a struct called `ObjectCreationParams` (`Vector2 Velocity; Vector2 Position`). The default starting position and velocity are `{0, 0}`. For example:
+Game objects in Blokk are represented by instances of the `GameObject` class.
+
+### Creating Objects
+
+When creating a `GameObject`, you can provide starting values using `ObjectCreationParams`.
+
+For example:
+
 ```cpp
-// Creating a new game object
 Blokk::ObjectCreationParams Params{
     Vector2{100, 100},
     Vector2{5, 0}
@@ -99,30 +194,138 @@ Blokk::ObjectCreationParams Params{
 Blokk::GameObject Player(Params);
 ```
 
-With the instance created, you can then call its functions normally like any class. You can get, set or change certain variables with getting / setting functions. 
+The starting position and velocity default to `{0, 0}` when they are not specified.
 
-                                                                                                                                            For a list of the functions, check the [function list](GameObjectFunctions.md).
-To take a deeper dive on how the engine handles objects, check the [engine documentation](EngineArchitecture.md).
+Once the object has been created, you can interact with it using its member functions.
 
-If you do this:
+### Modifying Objects
+
+Blokk provides functions for getting, setting, and changing object data.
+
+For example:
 
 ```cpp
+Player.SetVelocity(Vector2{5, 6});
 
-GameObject MyObject = new();
-
-MyObject.SetVelocity(Vector2{5, 6});
-
-std::cout << MyObject.GetVelocityX();
-
+std::cout << Player.GetVelocityX();
 ```
 
-The output will be 5 because the object directly reads and mutates the engine's data.
+The object directly accesses the engine's underlying object data, allowing changes made through the `GameObject` interface to be reflected in the engine.
 
+For a complete list of available functions, see the [GameObject Function List](GameObjectFunctions.md).
 
+For a deeper look at how Blokk stores and processes objects, see the [Engine Architecture](EngineArchitecture.md) documentation.
 
-## Example template
+---
 
-> You can also find it [here](../Example%20Projects/Template.cpp)
+## Engine Loop
+
+Blokk is designed to fit naturally into a game loop.
+
+Each frame, the engine should first process its internal systems and then render the objects.
+
+A basic loop looks like this:
+
+```cpp
+while (!WindowShouldClose())
+{
+    MyManager.EngineProcess();
+
+    BeginDrawing();
+    ClearBackground(BLACK);
+
+    MyManager.RenderObjects();
+
+    EndDrawing();
+}
+```
+
+### `EngineProcess()`
+
+Processes the engine for the current frame.
+
+This is where Blokk updates its internal object data and runs the engine's enabled systems.
+
+### `RenderObjects()`
+
+Renders the objects managed by Blokk.
+
+This function uses Raylib's rendering system.
+
+The typical order should therefore be:
+
+```text
+EngineProcess()
+      ↓
+BeginDrawing()
+      ↓
+RenderObjects()
+      ↓
+EndDrawing()
+```
+
+Your own game logic can be performed around the engine's processing step as needed.
+
+---
+
+## Using Blokk With Raylib
+
+Blokk's built-in renderer is designed to work with Raylib.
+
+A basic Raylib project and a Blokk project therefore have a very similar structure:
+
+```cpp
+InitWindow(1280, 720, "Blokk Example");
+
+while (!WindowShouldClose())
+{
+    // Game logic
+    MyManager.EngineProcess();
+
+    BeginDrawing();
+
+    // Rendering
+    MyManager.RenderObjects();
+
+    EndDrawing();
+}
+
+CloseWindow();
+```
+
+You should be familiar with the basics of Raylib before using Blokk's rendering system.
+
+For information about Raylib itself, refer to the Raylib documentation.
+
+---
+
+## Using Blokk Without Raylib Rendering
+
+Blokk's rendering system currently depends on Raylib, but the rest of the engine can be used independently.
+
+If you are using another graphics or game framework, you can use Blokk to manage your object data and systems while handling rendering yourself.
+
+For example, your application could use:
+
+```text
+Your Game
+   │
+   ├── Blokk
+   │    ├── Object management
+   │    ├── Movement
+   │    ├── Collision
+   │    └── Other engine systems
+   │
+   └── Your renderer
+```
+
+This allows Blokk to handle the data and processing while your own renderer decides how objects are displayed.
+
+---
+
+## Example Template
+
+> You can also find this template [here](../Example%20Projects/Template.cpp).
 
 ```cpp
 /*
@@ -145,36 +348,43 @@ int main()
     // Create an ObjectManager
     Blokk::ManagerCreation MCr = {
         Vector2{1280, 720}, // Screen dimensions
-        60 // FPS
+        60                  // FPS
     };
-    Blokk::ObjectManager MyManager(MCr); // New instance
 
-    // raylib loop
-    while(!WindowShouldClose())
+    Blokk::ObjectManager MyManager(MCr);
+
+    // Game loop
+    while (!WindowShouldClose())
     {
+        // Let the engine update
+        MyManager.EngineProcess();
 
-        // Here, perform all your tasks for the frame
+        // Begin drawing
+        BeginDrawing();
+        ClearBackground(BLACK);
 
-        {
-            // Let engine update
-            MyManager.EngineProcess();
+        // Let the engine render objects
+        MyManager.RenderObjects();
 
-            // Begin drawing
-            BeginDrawing();
-            ClearBackground(BLACK); // Clear background
-
-            // Let engine render objects
-            MyManager.RenderObjects();
-
-            EndDrawing();
-        }
+        EndDrawing();
     }
 
-    // Make sure to close!
+    // Close the window
     CloseWindow();
 
     return 0;
 }
-
 ```
 
+---
+
+## Next Steps
+
+Now that you have a basic Blokk project running, the following documentation covers the engine's individual systems in more detail:
+
+* [GameObject Functions](GameObjectFunctions.md) - Complete list of `GameObject` functions.
+* [Engine Architecture](EngineArchitecture.md) - How Blokk internally manages and processes objects.
+* [Render Culling Systems](RenderCullingSystems.md) - Information about Blokk's rendering and visibility-culling systems.
+* [Diagnostics](Diagnostics.md) - Using Blokk's diagnostic tools.
+* [Camera](Camera.md) - Using the camera system.
+* [Thread Control](ThreadControl.md) - Controlling the engine's threading behavior.
