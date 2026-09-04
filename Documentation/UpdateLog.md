@@ -1,4 +1,54 @@
-# Blokk v0.1.6
+# v0.1.7
+> 9/3/2026
+
+## Rendering
+
+* Added the new SDL3-based rendering system.
+* Added SDL_image support for loading textures from image files.
+* Added support for loading individual image files as animation frames.
+* Added `Renderer` animation functions:
+
+  * `CreateNewEmptyAnimation()`
+  * `AddFrameToAnimation()`
+  * `CreateAnimation()`
+* Added texture and per-frame dimension storage to `ObjectManager`.
+* Added rendering object index tracking.
+
+## Camera
+
+* Added `CameraController`.
+* Added camera position controls:
+
+  * `SetPosition()`
+  * `SetXPosition()`
+  * `SetYPosition()`
+  * `ChangeXPosition()`
+  * `ChangeYPosition()`
+* Added support for accessing the camera through the `ObjectManager`.
+
+## Engine Architecture
+
+* Reworked animation functionality to separate rendering functions from animation data.
+* Updated `ObjectManager` to support the new rendering architecture.
+* Added conditional rendering support through `Blokk_Rendering_Enabled`.
+* Updated engine CMake configuration for SDL3_image.
+* Added SDL_image as a vendored Git submodule.
+
+## Bug Fixes
+
+* Fixed issues with rendering-related diagnostics when rendering is disabled.
+* Fixed animation system organization and separated animation operations from stored animation data.
+* Fixed build configuration issues related to SDL and SDL_image integration.
+* Fixed camera state organization so camera position is managed by the camera controller.
+* Fixed various engine-system integration issues encountered during the rendering overhaul.
+
+## Dependencies
+
+* Added **SDL_image** and its required submodules.
+* Updated the project's `.gitmodules` configuration.
+
+
+# v0.1.6
 > 8/31/2026
 
 ## Update Notes

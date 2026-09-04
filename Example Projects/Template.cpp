@@ -1,50 +1,68 @@
-/*
-Here define the things you want the engine to use.
-For example:
-#define Blokk_Diagnostics
-*/
+#define Blokk_Rendering_Enabled
 
 #include <Blokk.hpp>
-#include "raylib.h"
 
 int main()
 {
-    // Create a window
-    InitWindow(1280, 720, "Blokk Example Project");
-
-    // Set the FPS
-    SetTargetFPS(60);
+    // Initialize Blokk
+    Blokk::Init(
+        Blokk::InitFlags::Video |
+        Blokk::InitFlags::Events
+    );
 
     // Create an ObjectManager
-    Blokk::ManagerCreation MCr = {
-        Vector2{1280, 720}, // Screen dimensions
-        60 // FPS
+    Blokk::ManagerCreation CreationParams{
+        Vector2{1280, 720},
+        60
     };
-    Blokk::ObjectManager MyManager(MCr); // New instance
 
-    // raylib loop
-    while(!WindowShouldClose())
-    {
+    Blokk::ObjectManager MyManager(CreationParams);
 
-        // Here, perform all your tasks for the frame
+    // Create the renderer and window
+    Blokk::Renderer Renderer(
+        MyManager,
+        Blokk::CreateWindow(
+            "Blokk Example",
+            1280,
+            720,
+            Blokk::WindowFlags::Resizable
+        )
+    );
 
+    // Set the background color
+    Renderer.SetClearColor(
+        0,
+        0,
+        0
+    );
+
+    // Create an animation
+    Renderer.CreateAnimation(
+        "PlayerIdle",
         {
-            // Let engine update
-            MyManager.EngineProcess();
-
-            // Begin drawing
-            BeginDrawing();
-            ClearBackground(BLACK); // Clear background
-
-            // Let engine render objects
-            MyManager.RenderObjects();
-
-            EndDrawing();
+            "Assets/Player/idle_0.png",
+            "Assets/Player/idle_1.png",
+            "Assets/Player/idle_2.png"
         }
+    );
+
+    bool Running = true;
+
+    while (Running)
+    {
+        // Event handling will go here
+
+        // Process the engine
+        MyManager.EngineProcess();
+
+        // Render
+        Renderer.ClearScreen();
+        Renderer.RenderObjects();
+        Renderer.Present();
     }
 
-    // Make sure to close!
-    CloseWindow();
+    // Shut down SDL
+    Blokk::Quit();
 
     return 0;
 }
