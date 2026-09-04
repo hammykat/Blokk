@@ -17,22 +17,6 @@ double ObjectManager::TimeEngineProcesses()
         UpdateCamPosition();
     #endif
 
-    { // User updates
-
-        #ifdef Blokk_Diagnostics
-            auto StartTime = std::chrono::steady_clock::now();
-        #endif
-
-        #ifdef Blokk_Diagnostics
-            auto EndTime = std::chrono::steady_clock::now();
-
-            UserUpdateTime =
-                std::chrono::duration<double, std::milli>(
-                    EndTime - StartTime
-                ).count();
-        #endif
-    }
-
     { // Velocities
 
         #ifdef Blokk_Diagnostics
@@ -53,25 +37,10 @@ double ObjectManager::TimeEngineProcesses()
             Workers[i]->SetRange(VelRanges[i]);
         }
 
-        // Wait for each to finish
-        for (auto& Worker : Workers)
-        {
-            Worker->WaitUntilFinished();
-        }
+        #ifdef Blokk_Rendering_Enabled
 
-        #ifdef Blokk_Diagnostics
-            auto EndTime = std::chrono::steady_clock::now();
-
-            VelocityTime =
-                std::chrono::duration<double, std::milli>(
-                    EndTime - StartTime
-                ).count();
-        #endif
-    }
-
-    { // Animations
-
-        { // Incrementing
+        { // Animation Frame Incrementing 
+            // (Done while velocities are being done by other threads)
 
             #ifdef Blokk_Diagnostics
                 auto StartTime = std::chrono::steady_clock::now();
@@ -89,6 +58,26 @@ double ObjectManager::TimeEngineProcesses()
                     ).count();
             #endif
         }
+
+        #endif
+
+        // Wait for each to finish
+        for (auto& Worker : Workers)
+        {
+            Worker->WaitUntilFinished();
+        }
+
+        #ifdef Blokk_Diagnostics
+            auto EndTime = std::chrono::steady_clock::now();
+
+            VelocityTime =
+                std::chrono::duration<double, std::milli>(
+                    EndTime - StartTime
+                ).count();
+        #endif
+    }
+
+    { // Animations
 
         { // Visibility checks
 
@@ -148,30 +137,6 @@ double ObjectManager::TimeEngineProcesses()
         std::chrono::duration<double, std::milli>(
             TotalEndTime - TotalStartTime
         ).count();
-
-    return TotalTime;
-}
-
-
-double ObjectManager::TimeRenderObjects()
-{
-    // Start time
-    auto StartTime = std::chrono::steady_clock::now();
-
-    RenderObjects();
-
-    // End time
-    auto EndTime = std::chrono::steady_clock::now();
-
-    // Calculate total time
-    auto TotalTime =
-        std::chrono::duration<double, std::milli>(
-            EndTime - StartTime
-        ).count();
-
-    #ifdef Blokk_Diagnostics
-        RenderTime = TotalTime;
-    #endif
 
     return TotalTime;
 }

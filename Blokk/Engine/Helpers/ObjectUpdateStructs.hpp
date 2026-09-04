@@ -3,7 +3,6 @@
 #include <vector>
 #include <concepts>
 
-#include "raylib.h"
 #include "GameObject.hpp"
 
 namespace Blokk {

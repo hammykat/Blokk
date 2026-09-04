@@ -1,19 +1,27 @@
-cmake_minimum_required(VERSION 3.25)
+add_library(Blokk STATIC
+    ../GameObjects/Frames+Animation.cpp
+    ../GameObjects/Position.cpp
+    ../GameObjects/Velocity.cpp
+    ../GameObjects/Visibility.cpp
 
-project(Blokk
-    VERSION 0.1.6
-    LANGUAGES CXX
+    IncrementFrames.cpp
+    Threading.cpp
+    UserUpdates.cpp
+    Velocities.cpp
+    Visibility_AxisCulling.cpp
+    Visibility_BasicCulling.cpp
 )
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+target_include_directories(Blokk
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../Include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../GameObjects
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Helpers
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
-# SDL
-add_subdirectory(vendored/SDL)
-
-# Blokk engine
-add_subdirectory(Blokk_Engine/Engine/EngineSystems)
-
-# Link SDL
-target_link_libraries(Blokk PRIVATE SDL3::SDL3)
+target_link_libraries(Blokk
+    PRIVATE
+        SDL3::SDL3
+        SDL3_image::SDL3_image
+)

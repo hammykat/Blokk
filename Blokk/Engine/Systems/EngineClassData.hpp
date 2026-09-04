@@ -17,6 +17,8 @@
 #include <memory>
 #include <algorithm>
 
+#include <SDL3/SDL.h>
+
 // Get correct default values
 #ifndef Blokk_Visibility_CullType
     #define Blokk_Visibility_CullType 1 // Axis culling
@@ -51,6 +53,7 @@ struct IndexRange
 
     class ObjectManager;
     class GameObject;
+    class Renderer;
 
     using CheckVisibleRangeFnPtr =
         void(ObjectManager::*)(IndexRange Range, Worker* Thread);
@@ -92,6 +95,7 @@ namespace Blokk
     {
     public:
         friend class GameObject;
+        friend class Renderer;
 
         ObjectManager(ManagerCreation Cr) :
 
@@ -116,7 +120,11 @@ namespace Blokk
             VelocityTime(0),
             AnimationIncrementTime(0),
             VisibilityCullingTime(0),
-            RenderTime(0),
+
+                #ifdef Blokk_Rendering_Enabled
+                    RenderTime(0),
+                #endif
+
             #endif
 
             // SIMD
@@ -162,39 +170,6 @@ namespace Blokk
         #ifdef Blokk_Thread_FixedCount
         void SetThreadCount(uint32_t Count);
         #endif
-
-        // Rendering --------------------------------------------------------
-
-        double TimeRenderObjects();
-
-        void RenderObjects()
-        {
-            for (auto Idx : RenderObjectIdxs)
-            {
-                // SKip if object isn't visible
-                if(!IsVisible[Idx]) continue;
-
-                uint32_t Anim = AnimNums[Idx];
-                uint32_t FrameCount = AnimFrameCounts[Anim];
-
-                // If animation empty
-                if (FrameCount == 0)
-                    continue;
-
-                uint32_t Frame = FrameNums[Idx] % FrameCount;
-                Texture2D Texture = Frames[Anim][Frame];
-
-                #ifdef Blokk_CamEnabled // Camera offsets
-                    int32_t x = XPositions[Idx] - CameraX;
-                    int32_t y = YPositions[Idx] - CameraY;
-                #else
-                    int32_t x = XPositions[Idx];
-                    int32_t y = YPositions[Idx];
-                #endif
-
-                DrawTexture(Texture, x, y, WHITE);
-            }
-        }
 
         // Diagnostics -----------------------------------
 
@@ -260,10 +235,12 @@ namespace Blokk
             return VisibilityCullingTime;
         }
 
+        #ifdef Blokk_Rendering_Enabled
         double GetRenderTime() const
         {
             return RenderTime;
         }
+        #endif
 
         void SetTargetExecutionTime(double Time)
         {
@@ -351,8 +328,11 @@ namespace Blokk
                       << AnimationIncrementTime << '\n';
             std::cout << "Visibility culling: "
                       << VisibilityCullingTime << '\n';
+
+            #ifdef Blokk_Rendering_Enabled
             std::cout << "Rendering: "
                       << RenderTime << '\n';
+            #endif
 
             std::cout << "END ==================================" << '\n';
         }
@@ -362,7 +342,9 @@ namespace Blokk
         // Camera functions
         #ifdef Blokk_CamEnabled
 
-        class Camera
+        CameraController Camera;
+
+        class CameraController
         {
         public:
             void SetPosition(int32_t X, int32_t Y)
@@ -446,8 +428,8 @@ namespace Blokk
 
         int32_t CameraX;
         int32_t CameraY;
-        int32_t CameraVelX;
-        int32_t CameraVelY;
+
+        CameraController Camera;
 
         #endif
 
@@ -465,6 +447,8 @@ namespace Blokk
         std::vector<CollisionHit> Collisions;
 
         // Animations
+        #ifdef Blokk_Animations_Enabled
+
         std::vector<uint32_t> FrameNums;
         std::vector<uint32_t> AnimNums;
 
@@ -472,7 +456,7 @@ namespace Blokk
         std::unordered_map<std::string, uint32_t> AnimNames;
 
         // Stores a list of animations
-        std::vector<std::vector<Texture2D>> Frames;
+        std::vector<std::vector<SDL_Texture*>> Frames;
         std::vector<std::vector<uint32_t>> FrameWidths;
         std::vector<std::vector<uint32_t>> FrameHeights;
         std::vector<uint32_t> AnimFrameCounts;
@@ -482,6 +466,8 @@ namespace Blokk
         std::vector<uint32_t> AnimWidths;
 
         std::vector<uint8_t> IsVisible;
+
+        #endif
 
         // Pointers to object instances
         std::vector<GameObject*> ObjectInstances;
@@ -516,7 +502,10 @@ namespace Blokk
         double VelocityTime;
         double AnimationIncrementTime;
         double VisibilityCullingTime;
-        double RenderTime;
+
+            #ifdef Blokk_Rendering_Enabled
+                double RenderTime;
+            #endif
 
         #endif
 
@@ -694,22 +683,6 @@ namespace Blokk
 
         void IncrementFrames(
             std::vector<uint32_t>& FrameNums
-        );
-
-        // Animations -------------------------------------------------
-
-        void CreateNewEmptyAnimation(
-            std::string Name
-        );
-
-        void CreateAnimation(
-            std::string Name,
-            std::vector<Texture2D>& Frames
-        );
-
-        void AddFramesToAnimation(
-            std::string Name,
-            std::vector<Texture2D>& Frames
         );
     };
 }

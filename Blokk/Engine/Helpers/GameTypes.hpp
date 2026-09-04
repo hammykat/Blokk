@@ -1,6 +1,7 @@
 #pragma once
 
-#include "raylib.h"
+#include <SDL3/SDL.h>
+#include <cstdint>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <vector>
@@ -15,9 +16,28 @@ struct Range {
     }
 };
 
+struct Vector2 {
+    int32_t x, y;
+};
+
 struct Circle {
     Vector2 Center;
     float Radius;
+};
+
+struct Rectangle {
+    float x, y;
+    float width, height;
+};
+
+struct Texture2D {
+    SDL_Texture* Texture = nullptr;
+    int32_t width = 0;
+    int32_t height = 0;
+};
+
+struct Color {
+    uint8_t r, g, b, a;
 };
 
 union CollisionHit {

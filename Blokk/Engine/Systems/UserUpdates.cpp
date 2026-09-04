@@ -1,7 +1,6 @@
 #include <utility>
 #include <vector>
 
-#include "raylib.h"
 #include "GameTypes.hpp"
 #include "GameObject.hpp"
 
