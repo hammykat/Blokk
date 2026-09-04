@@ -1,11 +1,8 @@
-You're right. I changed existing wording and structure when you specifically asked to **update it without changing the rest**. Here's the **entire document**, copy-pastable, with the existing content preserved and only the v0.1.7 changes incorporated.
-
 # Using the engine
 
 ## Table of Contents
 
 * [Engine Requirements](#engine-requirements)
-
   * [Platform Support](#platform-support)
   * [CPU](#cpu)
   * [Memory](#memory)
@@ -14,15 +11,20 @@ You're right. I changed existing wording and structure when you specifically ask
   * [Supported Compilers](#supported-compilers)
 * [Configuration Macros](#configuration-macros)
 * [Getting Started](#getting-started)
-
   * [Including Blokk](#including-blokk)
   * [Creating an ObjectManager](#creating-an-objectmanager)
 * [Game Objects](#game-objects)
-
   * [Creating Objects](#creating-objects)
   * [Modifying Objects](#modifying-objects)
 * [Engine Loop](#engine-loop)
-* [Using Blokk With SDL3](#using-blokk-with-sdl3)
+* [Using Blokk With Built-In Rendering](#using-blokk-with-built-in-rendering)
+  * [Initializing](#initializing)
+  * [Creating an ObjectManager](#creating-an-objectmanager-1)
+  * [Creating a Window](#creating-a-window)
+  * [Creating a Renderer](#creating-a-renderer)
+  * [Rendering](#rendering)
+  * [Setting the Clear Color](#setting-the-clear-color)
+  * [Animations](#animations)
 * [Using Blokk Without Built-In Rendering](#using-blokk-without-built-in-rendering)
 * [Example Template](#example-template)
 * [Next Steps](#next-steps)
@@ -90,6 +92,7 @@ Blokk is intended to work with:
 * GCC
 * Clang
 
+---
 
 ## Configuration Macros
 
@@ -118,6 +121,7 @@ The available configuration macros are:
 
 Only define the features your project needs. This allows Blokk to avoid enabling systems that your project does not use.
 
+---
 
 ## Getting Started
 
@@ -139,13 +143,15 @@ Include Blokk after defining any configuration macros you want to use:
 #include <Blokk.hpp>
 ```
 
-If you are using Blokk's built-in rendering system, you will also need SDL3 and SDL_image:
+If you are using Blokk's built-in rendering system, enable it before including Blokk:
 
 ```cpp
+#define Blokk_Rendering_Enabled
+
 #include <Blokk.hpp>
-#include <SDL3/SDL.h>
-#include <SDL3_image/SDL_image.h>
 ```
+
+You do not need to include SDL3 or SDL_image directly when using Blokk's public rendering API.
 
 ### Creating an ObjectManager
 
@@ -165,7 +171,7 @@ Blokk::ObjectManager MyManager(CreationParams);
 `ManagerCreation` contains the basic information the engine needs when starting:
 
 ```cpp
-struct ManagerCreation 
+struct ManagerCreation
 {
     Vector2 ScreenDimensions;
     uint32_t FPS = 30;
@@ -177,6 +183,7 @@ struct ManagerCreation
 
 Once the `ObjectManager` has been created, you can begin creating objects and processing the engine.
 
+---
 
 ## Game Objects
 
@@ -219,6 +226,7 @@ For a complete list of available functions, see the [GameObject Function List](G
 
 For a deeper look at how Blokk stores and processes objects, see the [Engine Architecture](EngineArchitecture.md) documentation.
 
+---
 
 ## Engine Loop
 
@@ -226,20 +234,16 @@ Blokk is designed to fit naturally into a game loop.
 
 Each frame, the engine should first process its internal systems and then render the objects.
 
-A basic loop looks like this:
+With the built-in renderer, a frame follows this order:
 
-```cpp
-while (!WindowShouldClose())
-{
-    MyManager.EngineProcess();
-
-    BeginDrawing();
-    ClearBackground(BLACK);
-
-    MyManager.RenderObjects();
-
-    EndDrawing();
-}
+```text
+EngineProcess()
+      ↓
+ClearScreen()
+      ↓
+RenderObjects()
+      ↓
+Present()
 ```
 
 ### `EngineProcess()`
@@ -252,58 +256,237 @@ This is where Blokk updates its internal object data and runs the engine's enabl
 
 Renders the objects managed by Blokk.
 
-This function uses SDL3's rendering system.
-
-The typical order should therefore be:
-
-```text
-EngineProcess()
-      ↓
-RenderObjects()
-```
+This function is provided by the `Renderer` when built-in rendering is enabled.
 
 Your own game logic can be performed around the engine's processing step as needed.
 
+---
 
-## Using Blokk With SDL3
+# Using Blokk With Built-In Rendering
 
-Blokk's built-in renderer uses SDL3 for rendering and SDL_image for loading image assets.
+Blokk's built-in rendering system uses SDL3 for rendering and SDL_image for loading image assets.
 
-A basic SDL3 project and a Blokk project therefore have a very similar structure:
+To enable it, define:
 
 ```cpp
-SDL_Init(SDL_INIT_VIDEO);
+#define Blokk_Rendering_Enabled
+```
 
-SDL_Window* Window =
-    SDL_CreateWindow("Blokk Example", 1280, 720, 0);
+before including Blokk:
 
+```cpp
+#define Blokk_Rendering_Enabled
+
+#include <Blokk.hpp>
+```
+
+---
+
+## Initializing
+
+Initialize the SDL systems your game needs with `Blokk::Init()`:
+
+```cpp
+Blokk::Init(
+    Blokk::InitFlags::Video |
+    Blokk::InitFlags::Events
+);
+```
+
+Multiple flags can be combined using `|`.
+
+Available initialization flags:
+
+| Flag       | Purpose                  |
+| ---------- | ------------------------ |
+| `Video`    | Video and window support |
+| `Audio`    | Audio support            |
+| `Joystick` | Joystick support         |
+| `Haptic`   | Haptic feedback          |
+| `Gamepad`  | Gamepad support          |
+| `Events`   | Event handling           |
+| `Sensor`   | Sensor support           |
+
+For a normal game, you will usually want:
+
+```cpp
+Blokk::Init(
+    Blokk::InitFlags::Video |
+    Blokk::InitFlags::Events
+);
+```
+
+---
+
+## Creating an ObjectManager
+
+Create an `ObjectManager` using `ManagerCreation`:
+
+```cpp
 Blokk::ManagerCreation CreationParams{
     Vector2{1280, 720},
     60
 };
 
 Blokk::ObjectManager MyManager(CreationParams);
-
-Blokk::Renderer Renderer(MyManager, Window);
-
-while (true)
-{
-    // Game logic
-    MyManager.EngineProcess();
-
-    // Rendering
-    Renderer.RenderObjects();
-}
-
-SDL_DestroyWindow(Window);
-SDL_Quit();
 ```
 
-The `Renderer` manages the SDL3 rendering system while the `ObjectManager` continues to manage the engine's object data.
+---
 
-### Animations
+## Creating a Window
 
-Animation frames can be loaded individually using SDL_image.
+Use `Blokk::CreateWindow()` to create a window:
+
+```cpp
+Blokk::CreateWindow(
+    "My Game",
+    1280,
+    720
+);
+```
+
+You can also provide `WindowFlags`:
+
+```cpp
+Blokk::CreateWindow(
+    "My Game",
+    1280,
+    720,
+    Blokk::WindowFlags::Resizable
+);
+```
+
+Multiple flags can be combined using `|`:
+
+```cpp
+Blokk::WindowFlags::Resizable |
+Blokk::WindowFlags::HighDPI
+```
+
+Available window flags:
+
+| Flag         | Purpose                         |
+| ------------ | ------------------------------- |
+| `Fullscreen` | Creates a fullscreen window     |
+| `Resizable`  | Allows the window to be resized |
+| `Borderless` | Removes the window border       |
+| `Hidden`     | Creates the window hidden       |
+| `Maximized`  | Creates the window maximized    |
+| `Minimized`  | Creates the window minimized    |
+| `HighDPI`    | Enables high-DPI support        |
+
+---
+
+## Creating a Renderer
+
+Create a `Renderer` by passing your `ObjectManager` and a window:
+
+```cpp
+Blokk::Renderer Renderer(
+    MyManager,
+    Blokk::CreateWindow(
+        "My Game",
+        1280,
+        720
+    )
+);
+```
+
+You can also pass window flags:
+
+```cpp
+Blokk::Renderer Renderer(
+    MyManager,
+    Blokk::CreateWindow(
+        "My Game",
+        1280,
+        720,
+        Blokk::WindowFlags::Resizable
+    )
+);
+```
+
+The renderer manages the rendering system and the textures used by Blokk's animation system.
+
+The window passed to the renderer is destroyed automatically when the renderer is destroyed.
+
+---
+
+## Rendering
+
+Rendering a frame requires **three steps**:
+
+```cpp
+Renderer.ClearScreen();
+Renderer.RenderObjects();
+Renderer.Present();
+```
+
+### `ClearScreen()`
+
+Clears the screen before rendering the next frame:
+
+```cpp
+Renderer.ClearScreen();
+```
+
+### `RenderObjects()`
+
+Renders all objects currently registered for rendering:
+
+```cpp
+Renderer.RenderObjects();
+```
+
+The renderer automatically selects each object's:
+
+* Animation
+* Animation frame
+* Position
+* Frame dimensions
+
+If the camera system is enabled, the camera position is also applied automatically.
+
+See [Camera](Camera.md) for more information about the camera system.
+
+### `Present()`
+
+Displays the completed frame:
+
+```cpp
+Renderer.Present();
+```
+
+### Setting the Clear Color
+
+You can change the color used when clearing the screen:
+
+```cpp
+Renderer.SetClearColor(
+    30,  // Red
+    30,  // Green
+    30   // Blue
+);
+```
+
+You can also specify an alpha value:
+
+```cpp
+Renderer.SetClearColor(
+    30,  // Red
+    30,  // Green
+    30,  // Blue
+    255  // Alpha
+);
+```
+
+Alpha defaults to `255`.
+
+---
+
+## Animations
+
+Blokk uses **individual image files** for animation frames.
 
 For example:
 
@@ -318,17 +501,43 @@ Renderer.CreateAnimation(
 );
 ```
 
-The renderer loads each image into an `SDL_Texture` and stores the animation data in the `ObjectManager`.
+Each image is loaded as a texture and stored by the engine.
+
+### Creating an Empty Animation
+
+You can create an animation without adding frames:
+
+```cpp
+Renderer.CreateNewEmptyAnimation(
+    "PlayerIdle"
+);
+```
+
+Frames can then be added individually:
+
+```cpp
+Renderer.AddFrameToAnimation(
+    "PlayerIdle",
+    "Assets/Player/idle_0.png"
+);
+
+Renderer.AddFrameToAnimation(
+    "PlayerIdle",
+    "Assets/Player/idle_1.png"
+);
+```
+
+`CreateAnimation()` is a convenient way to create an animation and add multiple frames at once.
 
 ---
 
-## Using Blokk Without Built-In Rendering
+# Using Blokk Without Built-In Rendering
 
 Blokk's rendering system is optional.
 
-If you are using another graphics or game framework, you can use Blokk to manage your object data and systems while handling rendering yourself.
+If you are using another graphics or game framework, you can use Blokk to manage your object data and engine systems while handling rendering yourself.
 
-For example, your application could use:
+For example:
 
 ```text
 Your Game
@@ -342,11 +551,17 @@ Your Game
    └── Your renderer
 ```
 
-This allows Blokk to handle the data and processing while your own renderer decides how objects are displayed.
+To disable Blokk's built-in renderer, simply do not define:
+
+```cpp
+#define Blokk_Rendering_Enabled
+```
+
+This allows Blokk to handle the engine systems while your own renderer decides how objects are displayed.
 
 ---
 
-## Example Template
+# Example Template
 
 > You can also find this template [here](../Example%20Projects/Template.cpp).
 
@@ -363,15 +578,17 @@ int main()
         Blokk::InitFlags::Events
     );
 
-    // Create an ObjectManager
+    // Create the ObjectManager
     Blokk::ManagerCreation CreationParams{
         Vector2{1280, 720},
         60
     };
 
-    Blokk::ObjectManager MyManager(CreationParams);
+    Blokk::ObjectManager MyManager(
+        CreationParams
+    );
 
-    // Create the renderer and window
+    // Create the window and renderer
     Blokk::Renderer Renderer(
         MyManager,
         Blokk::CreateWindow(
@@ -403,8 +620,6 @@ int main()
 
     while (Running)
     {
-        // Event handling will go here
-
         // Process the engine
         MyManager.EngineProcess();
 
@@ -414,7 +629,7 @@ int main()
         Renderer.Present();
     }
 
-    // Shut down SDL
+    // Shut down Blokk
     Blokk::Quit();
 
     return 0;
@@ -423,7 +638,7 @@ int main()
 
 ---
 
-## Next Steps
+# Next Steps
 
 Now that you have a basic Blokk project running, the following documentation covers the engine's individual systems in more detail:
 
@@ -432,7 +647,4 @@ Now that you have a basic Blokk project running, the following documentation cov
 * [Render Culling Systems](RenderCullingSystems.md) - Information about Blokk's rendering and visibility-culling systems.
 * [Diagnostics](Diagnostics.md) - Using Blokk's diagnostic tools.
 * [Camera](Camera.md) - Using the camera system.
-* [Thread Control](ThreadControl.md) - Controlling the engine's threading behavior.
-
-```
-```
+* [Thread Control](ThreadControl.md) - Controlling Blokk's threading behavior.
