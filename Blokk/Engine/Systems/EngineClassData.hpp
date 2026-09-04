@@ -342,44 +342,45 @@ namespace Blokk
         // Camera functions
         #ifdef Blokk_CamEnabled
 
-        CameraController Camera;
-
+        
         class CameraController
         {
-        public:
+            public:
             void SetPosition(int32_t X, int32_t Y)
             {
                 CameraX = X;
                 CameraY = Y;
             }
-
+            
             void SetPosition(Vector2 Pos)
             {
                 CameraX = Pos.x;
                 CameraY = Pos.y;
             }
-
+            
             void SetXPosition(int32_t X)
             {
                 CameraX = X;
             }
-
+            
             void SetYPosition(int32_t Y)
             {
                 CameraY = Y;
             }
-
+            
             void ChangeXPosition(int32_t X)
             {
                 CameraX += X;
             }
-
+            
             void ChangeYPosition(int32_t Y)
             {
                 CameraY += Y;
             }
         };
-
+        
+        CameraController Camera;
+        
         #endif
 
         #ifdef Blokk_Thread_Control
