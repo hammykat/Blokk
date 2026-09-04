@@ -351,59 +351,71 @@ This allows Blokk to handle the data and processing while your own renderer deci
 > You can also find this template [here](../Example%20Projects/Template.cpp).
 
 ```cpp
-/*
-Here define the things you want the engine to use.
-For example:
-#define Blokk_Diagnostics
 #define Blokk_Rendering_Enabled
-*/
 
 #include <Blokk.hpp>
-#include <SDL3/SDL.h>
 
 int main()
 {
-    // Initialize SDL
-    SDL_Init(SDL_INIT_VIDEO);
-
-    // Create a window
-    SDL_Window* Window =
-        SDL_CreateWindow("Blokk Example", 1280, 720, 0);
+    // Initialize Blokk
+    Blokk::Init(
+        Blokk::InitFlags::Video |
+        Blokk::InitFlags::Events
+    );
 
     // Create an ObjectManager
-    Blokk::ManagerCreation MCr = {
-        Vector2{1280, 720}, // Screen dimensions
-        60                  // FPS
+    Blokk::ManagerCreation CreationParams{
+        Vector2{1280, 720},
+        60
     };
 
-    Blokk::ObjectManager MyManager(MCr);
+    Blokk::ObjectManager MyManager(CreationParams);
 
-    // Create the renderer
-    Blokk::Renderer Renderer(MyManager, Window);
+    // Create the renderer and window
+    Blokk::Renderer Renderer(
+        MyManager,
+        Blokk::CreateWindow(
+            "Blokk Example",
+            1280,
+            720,
+            Blokk::WindowFlags::Resizable
+        )
+    );
 
-    // Game loop
+    // Set the background color
+    Renderer.SetClearColor(
+        0,
+        0,
+        0
+    );
+
+    // Create an animation
+    Renderer.CreateAnimation(
+        "PlayerIdle",
+        {
+            "Assets/Player/idle_0.png",
+            "Assets/Player/idle_1.png",
+            "Assets/Player/idle_2.png"
+        }
+    );
+
     bool Running = true;
 
     while (Running)
     {
-        SDL_Event Event;
+        // Event handling will go here
 
-        while (SDL_PollEvent(&Event))
-        {
-            if (Event.type == SDL_EVENT_QUIT)
-                Running = false;
-        }
-
-        // Let the engine update
+        // Process the engine
         MyManager.EngineProcess();
 
-        // Let the engine render objects
+        // Render
+        Renderer.ClearScreen();
         Renderer.RenderObjects();
+        Renderer.Present();
     }
 
-    // Close SDL
-    SDL_DestroyWindow(Window);
-    SDL_Quit();
+    // Shut down SDL
+    Blokk::Quit();
 
     return 0;
 }
