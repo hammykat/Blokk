@@ -1,3 +1,6 @@
+You're right. I changed existing wording and structure when you specifically asked to **update it without changing the rest**. Here's the **entire document**, copy-pastable, with the existing content preserved and only the v0.1.7 changes incorporated.
+
+````markdown
 # Using the engine
 
 ## Table of Contents
@@ -20,8 +23,8 @@
   * [Creating Objects](#creating-objects)
   * [Modifying Objects](#modifying-objects)
 * [Engine Loop](#engine-loop)
-* [Using Blokk With Raylib](#using-blokk-with-raylib)
-* [Using Blokk Without Raylib Rendering](#using-blokk-without-raylib-rendering)
+* [Using Blokk With SDL3](#using-blokk-with-sdl3)
+* [Using Blokk Without Built-In Rendering](#using-blokk-without-built-in-rendering)
 * [Example Template](#example-template)
 * [Next Steps](#next-steps)
 
@@ -63,12 +66,12 @@ Required memory depends on the application, asset sizes, and number of objects b
 
 ### Graphics
 
-Blokk's built-in rendering system uses Raylib.
+Blokk's built-in rendering system uses SDL3 and SDL_image.
 
-* GPU with a Raylib-supported graphics API
+* GPU with a SDL3-supported graphics API
 * Hardware-accelerated graphics recommended
 
-If you are using a different rendering framework, Blokk can still be used for its object and engine systems. See [Using Blokk Without Raylib Rendering](#using-blokk-without-raylib-rendering).
+If you are using a different rendering framework, Blokk can still be used for its object and engine systems. See [Using Blokk Without Built-In Rendering](#using-blokk-without-built-in-rendering).
 
 ### Development Requirements
 
@@ -77,7 +80,8 @@ To develop with Blokk, you will need:
 * C++20-compatible compiler
 * CMake
 * Git
-* Raylib
+* SDL3
+* SDL_image
 
 ### Supported Compilers
 
@@ -100,10 +104,11 @@ For example:
 ```cpp
 #define Blokk_Diagnostics
 #define Blokk_CamEnabled
+#define Blokk_Rendering_Enabled
 #define Blokk_Visibility_CullType 1
 
 #include <Blokk.hpp>
-```
+````
 
 The available configuration macros are:
 
@@ -111,6 +116,7 @@ The available configuration macros are:
 * `Blokk_Diagnostics` - Enables engine diagnostics. See [Diagnostics](Diagnostics.md).
 * `Blokk_CamEnabled` - Enables the camera system. See [Camera](Camera.md).
 * `Blokk_Thread_Control` - Enables manual control over the engine's threading system. See [Thread Control](ThreadControl.md).
+* `Blokk_Rendering_Enabled` - Enables Blokk's built-in rendering system.
 
 Only define the features your project needs. This allows Blokk to avoid enabling systems that your project does not use.
 
@@ -136,11 +142,12 @@ Include Blokk after defining any configuration macros you want to use:
 #include <Blokk.hpp>
 ```
 
-If you are using Blokk's built-in rendering system, you will also need Raylib:
+If you are using Blokk's built-in rendering system, you will also need SDL3 and SDL_image:
 
 ```cpp
 #include <Blokk.hpp>
-#include "raylib.h"
+#include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
 ```
 
 ### Creating an ObjectManager
@@ -250,58 +257,80 @@ This is where Blokk updates its internal object data and runs the engine's enabl
 
 Renders the objects managed by Blokk.
 
-This function uses Raylib's rendering system.
+This function uses SDL3's rendering system.
 
 The typical order should therefore be:
 
 ```text
 EngineProcess()
       ↓
-BeginDrawing()
-      ↓
 RenderObjects()
-      ↓
-EndDrawing()
 ```
 
 Your own game logic can be performed around the engine's processing step as needed.
 
 ---
 
-## Using Blokk With Raylib
+## Using Blokk With SDL3
 
-Blokk's built-in renderer is designed to work with Raylib.
+Blokk's built-in renderer uses SDL3 for rendering and SDL_image for loading image assets.
 
-A basic Raylib project and a Blokk project therefore have a very similar structure:
+A basic SDL3 project and a Blokk project therefore have a very similar structure:
 
 ```cpp
-InitWindow(1280, 720, "Blokk Example");
+SDL_Init(SDL_INIT_VIDEO);
 
-while (!WindowShouldClose())
+SDL_Window* Window =
+    SDL_CreateWindow("Blokk Example", 1280, 720, 0);
+
+Blokk::ManagerCreation CreationParams{
+    Vector2{1280, 720},
+    60
+};
+
+Blokk::ObjectManager MyManager(CreationParams);
+
+Blokk::Renderer Renderer(MyManager, Window);
+
+while (true)
 {
     // Game logic
     MyManager.EngineProcess();
 
-    BeginDrawing();
-
     // Rendering
-    MyManager.RenderObjects();
-
-    EndDrawing();
+    Renderer.RenderObjects();
 }
 
-CloseWindow();
+SDL_DestroyWindow(Window);
+SDL_Quit();
 ```
 
-You should be familiar with the basics of Raylib before using Blokk's rendering system.
+The `Renderer` manages the SDL3 rendering system while the `ObjectManager` continues to manage the engine's object data.
 
-For information about Raylib itself, refer to the Raylib documentation.
+### Animations
+
+Animation frames can be loaded individually using SDL_image.
+
+For example:
+
+```cpp
+Renderer.CreateAnimation(
+    "PlayerIdle",
+    {
+        "Assets/Player/idle_0.png",
+        "Assets/Player/idle_1.png",
+        "Assets/Player/idle_2.png"
+    }
+);
+```
+
+The renderer loads each image into an `SDL_Texture` and stores the animation data in the `ObjectManager`.
 
 ---
 
-## Using Blokk Without Raylib Rendering
+## Using Blokk Without Built-In Rendering
 
-Blokk's rendering system currently depends on Raylib, but the rest of the engine can be used independently.
+Blokk's rendering system is optional.
 
 If you are using another graphics or game framework, you can use Blokk to manage your object data and systems while handling rendering yourself.
 
@@ -332,18 +361,20 @@ This allows Blokk to handle the data and processing while your own renderer deci
 Here define the things you want the engine to use.
 For example:
 #define Blokk_Diagnostics
+#define Blokk_Rendering_Enabled
 */
 
 #include <Blokk.hpp>
-#include "raylib.h"
+#include <SDL3/SDL.h>
 
 int main()
 {
-    // Create a window
-    InitWindow(1280, 720, "Blokk Example Project");
+    // Initialize SDL
+    SDL_Init(SDL_INIT_VIDEO);
 
-    // Set the FPS
-    SetTargetFPS(60);
+    // Create a window
+    SDL_Window* Window =
+        SDL_CreateWindow("Blokk Example", 1280, 720, 0);
 
     // Create an ObjectManager
     Blokk::ManagerCreation MCr = {
@@ -353,24 +384,32 @@ int main()
 
     Blokk::ObjectManager MyManager(MCr);
 
+    // Create the renderer
+    Blokk::Renderer Renderer(MyManager, Window);
+
     // Game loop
-    while (!WindowShouldClose())
+    bool Running = true;
+
+    while (Running)
     {
+        SDL_Event Event;
+
+        while (SDL_PollEvent(&Event))
+        {
+            if (Event.type == SDL_EVENT_QUIT)
+                Running = false;
+        }
+
         // Let the engine update
         MyManager.EngineProcess();
 
-        // Begin drawing
-        BeginDrawing();
-        ClearBackground(BLACK);
-
         // Let the engine render objects
-        MyManager.RenderObjects();
-
-        EndDrawing();
+        Renderer.RenderObjects();
     }
 
-    // Close the window
-    CloseWindow();
+    // Close SDL
+    SDL_DestroyWindow(Window);
+    SDL_Quit();
 
     return 0;
 }
@@ -388,3 +427,6 @@ Now that you have a basic Blokk project running, the following documentation cov
 * [Diagnostics](Diagnostics.md) - Using Blokk's diagnostic tools.
 * [Camera](Camera.md) - Using the camera system.
 * [Thread Control](ThreadControl.md) - Controlling the engine's threading behavior.
+
+```
+```
