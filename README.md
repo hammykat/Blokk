@@ -1,78 +1,156 @@
 # Blokk
 
-A beginner-friendly, open source 2D game engine in **C++ and raylib** designed for **easy use** and **high performance**.
+A beginner-friendly, high-performance open-source **2D C++ game engine**, designed to provide a simple API while still giving developers direct access to a performance-oriented engine.
 
-It is designed to have:
-- **Beginner-friendly API** - Simple, easy to understand functions and systems designed to be easy to use and understand.
-- **High Performance** - The engine is designed to be high performance and utilizes things like **SIMD**, **SoA for data layout**, and **Parallel tasking** to distribute work across cores.
-- **Adaptability** - The engine will time its processes and adapt to the user's computer, allowing for it to be used on many computers of different speed.
-- **2D Focused** - The engine is built specifically around 2D game development.
-- **C++** -- Full access to C++ and the underlying engine.
-- **Lightweight** - The engine is made to be lightweight and uses **raylib**
-- **Open source** - Anyone can inspect, learn from, contribute to, and improve the engine.
+Blokk focuses on **high performance, lightweight architecture, and ease of use**, while allowing developers to work directly with C++.
+
+## Features
+
+Blokk is designed around:
+
+* **Beginner-friendly API** — Simple, understandable functions and systems designed to make the engine easier to learn.
+* **High Performance** — Uses techniques such as SIMD, Structure of Arrays (SoA), cache-friendly data layouts, and parallel processing.
+* **Adaptive Threading** — The engine can automatically adjust its worker-thread usage based on execution time.
+* **2D Focused** — Built specifically around 2D game development rather than trying to cover every type of game.
+* **C++** — Full access to C++ and the underlying engine.
+* **SDL3 Rendering** — Uses SDL3 for rendering and SDL_image for loading image assets.
+* **Lightweight** — Designed to keep the engine's core systems relatively small and focused.
+* **Open Source** — Anyone can inspect the source code, learn from it, contribute improvements, or experiment with the architecture.
 
 The goal is to provide a simple API for beginners without sacrificing the performance and control expected from a C++ engine.
 
-## High-Performance 
+## Performance
 
-The engine uses many things to be high-performance, like:
-- Data-oriented design
-- Efficient memory layouts
-- SIMD
-- Parallel task processing
-- Cache-friendly data structures
-- Batched processing
-- Separation of static and dynamic object data
+Blokk is designed around **data-oriented and performance-conscious programming techniques**.
 
-The engine is designed for extreme speed, utilizing things like efficient data layout and SIMD to handle a very large amount (hundreds of thousands to millions in later updates) of objects at stable fps (For more about how the engine works, check out the [background engine architecture](Documentation/EngineArchitecture.md).
+Some of the approaches used by the engine include:
+
+* Data-oriented design
+* Structure of Arrays (SoA)
+* Cache-friendly data layouts
+* SIMD processing
+* Parallel task processing
+* Adaptive thread management
+* Separation of static and dynamic object data
+* Visibility culling
+* Specialized processing paths
+
+The long-term goal is to make Blokk capable of efficiently handling very large numbers of objects while maintaining stable frame times.
+
+Performance is an ongoing area of development, and future versions will include more extensive benchmarking and optimization.
+
+For more information about the engine's architecture, see the [engine architecture documentation](Documentation/EngineArchitecture.md).
+
+## Rendering
+
+Blokk currently uses **SDL3** as its rendering backend, with **SDL_image** for loading image assets.
+
+The rendering system supports:
+
+* Loading image files as animation frames
+* Creating and managing animations
+* Per-frame dimensions
+* Rendering visible objects
+* Camera-relative rendering
+* Rendering diagnostics
+* Optional rendering through `Blokk_Rendering_Enabled`
+
+Rendering is designed to remain separate from the engine's core object-processing systems where possible.
+
+## Threading
+
+Blokk includes configurable thread-management systems.
+
+### Adaptive Threading
+
+With adaptive threading enabled, Blokk monitors frame execution time and can adjust the number of worker threads being used.
+
+This allows the engine to adapt its workload to different hardware rather than requiring a single fixed thread count.
+
+### Fixed Threading
+
+Developers can also configure a fixed number of worker threads when predictable thread usage is preferred.
+
+Thread control can be configured through the engine's configuration macros.
+
+## Visibility Culling
+
+Blokk includes multiple visibility-culling implementations designed to avoid processing objects that are outside the relevant screen area.
+
+Currently available culling approaches include:
+
+* Basic Culling
+* Axis Culling
+
+The engine can select optimized implementations based on the available SIMD instruction set.
+
+## Camera
+
+Blokk includes an optional camera system for 2D projects.
+
+The camera supports:
+
+* Setting its position
+* Changing its X and Y position
+* Accessing camera position through the `ObjectManager`
+* Camera-aware rendering
+* Camera-aware visibility culling
 
 ## Documentation
 
-For a complete documentation, check out the [documentation](Documentation).
-Here you'll see how the engine is structured, how to use it, and cool features it has!
+For complete documentation, see the [documentation](Documentation).
 
-## Support / Contributing
+The documentation covers:
 
-If you want to offer support, hang out, contribute and get announcements when a new update gets posted, join the [discord server](https://discord.gg/n5Mp93Nqd)!
-You can also reach out to **@Hammykat** on discord!
+* Engine architecture
+* Configuration options
+* Threading
+* Visibility culling
+* Camera functionality
+* Using Blokk
+* Engine systems and internals
 
-In the server:
+## Contributing
 
-* We'll send announcements about new updates
-* You can contribute (see below)
-* You can chill and hang out with people
-* You can see what's in the works for future updates
+Blokk is open source and contributions are welcome.
 
-You can contribute in many ways, such as:
+You can contribute through:
 
+* Code
 * Testing
 * Documentation
-* Code review
 * Bug fixes
-* UI design
-* Ideas
-* Suggestions
-* Feedback
+* Code review
+* UI and tooling
+* Rendering
+* Performance improvements
+* Ideas and suggestions
+* Example projects and tutorials
 
-And any other place you think you could help.
+If you want to contribute, see the project's contribution guidelines in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-## Required specs
+## Requirements
 
-| Component            | Minimum                           |
+| Component            | Requirement                       |
 | -------------------- | --------------------------------- |
-| **CPU architecture** | x86 / x86-64                      |
-| **SIMD**             | **SSE2**                          |
+| **CPU Architecture** | x86 / x86-64                      |
+| **SIMD**             | SSE2                              |
 | **AVX**              | Not required                      |
 | **AVX2**             | Not required                      |
 | **AVX-512**          | Not required                      |
-| **NEON/ARM**         | Not currently supported           |
+| **NEON / ARM**       | Not currently supported           |
 | **OS**               | Windows / Linux / macOS*          |
-| **RAM**              | No hard minimum established yet   |
-| **GPU**              | OpenGL-capable GPU through Raylib |
+| **RAM**              | No hard minimum established       |
+| **GPU**              | SDL3-compatible graphics hardware |
 | **C++**              | C++20                             |
-| **Build system**     | CMake                             |
+| **Build System**     | CMake                             |
 | **Compiler**         | MSVC, GCC, or Clang               |
 
-### Licensing
-This project is protected under the zlib license.
-For more, [check here](LICENSE)
+* Platform support may vary depending on the current SDL3 configuration and engine implementation.
+
+
+## License
+
+Blokk is licensed under the **zlib License**.
+
+See [`LICENSE`](LICENSE) for the full license text.
