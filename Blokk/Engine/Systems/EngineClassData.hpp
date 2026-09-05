@@ -102,7 +102,7 @@ namespace Blokk
             // Threads
             ThreadOpenedPrevFrame(false),
             ThreadDestroyedPrevFrame(false),
-            OptimalThreadCountReached(false),
+            AdaptiveThreadingEnabled(true),
             ThreadCount(std::thread::hardware_concurrency()),
             OpenedThreads(ThreadCount),
             PrevOpenedThreads(0),
@@ -311,7 +311,7 @@ namespace Blokk
             std::cout << "Opened Threads: " << OpenedThreads << '\n';
             std::cout << "Total Threads: " << ThreadCount << '\n';
             std::cout << "Optimal thread count reached: "
-                      << (OptimalThreadCountReached ? "true" : "false")
+                      << (AdaptiveThreadingEnabled ? "true" : "false")
                       << "\n\n";
 
             std::cout << "Object Counts ---------------" << '\n';
@@ -507,7 +507,7 @@ namespace Blokk
 
         bool ThreadOpenedPrevFrame;
         bool ThreadDestroyedPrevFrame;
-        bool OptimalThreadCountReached;
+        bool AdaptiveThreadingEnabled;
 
         double FrameExecutionTime;
         double PrevFrameTime;
@@ -645,6 +645,10 @@ namespace Blokk
 
         // Do the engine processes and time it
         double TimeEngineProcesses();
+
+        // Adaptive threading system
+        void StopAdaptiveThreadingSystem();
+        void EnableAdaptiveThreadingSystem();
 
         // Swap 2 objects
         void SwapStaticObjects(uint32_t Obj1, uint32_t Obj2);

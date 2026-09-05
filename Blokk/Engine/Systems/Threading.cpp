@@ -146,7 +146,7 @@ void ObjectManager::EngineProcess()
 {
     FrameExecutionTime = TimeEngineProcesses();
 
-    if (!OptimalThreadCountReached)
+    if (!AdaptiveThreadingEnabled)
     {
         // If a thread was opened previous frame
         if (ThreadOpenedPrevFrame)
@@ -161,7 +161,6 @@ void ObjectManager::EngineProcess()
                 
                 // Update vars
                 ThreadOpenedPrevFrame = false;
-                OptimalThreadCountReached = true;
             }
 
             // If took too long
@@ -175,10 +174,8 @@ void ObjectManager::EngineProcess()
                     // Update var
                     ThreadOpenedPrevFrame = true;
                 } 
-                else 
-                { // If no more can be opened stop
-                    OptimalThreadCountReached = true;
-                }
+                
+                // Do nothing if else
             }
 
             // If took a good time
@@ -199,16 +196,20 @@ void ObjectManager::EngineProcess()
 
                     // Update var
                     ThreadOpenedPrevFrame = true;
-                } 
-                else 
-                { // If no more can be opened stop
-                    OptimalThreadCountReached = true;
                 }
             }
         }
 
         PrevFrameTime = FrameExecutionTime;
     }
+}
+
+void ObjectManager::StopAdaptiveThreadingSystem() {
+    AdaptiveThreadingEnabled = false;
+}
+
+void ObjectManager::EnableAdaptiveThreadingSystem() {
+    AdaptiveThreadingEnabled = true;
 }
 
 #elif defined(Blokk_Thread_FixedCount)
