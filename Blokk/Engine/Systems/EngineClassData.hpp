@@ -104,7 +104,7 @@ namespace Blokk
             ThreadDestroyedPrevFrame(false),
             OptimalThreadCountReached(false),
             ThreadCount(std::thread::hardware_concurrency()),
-            OpenedThreads(0),
+            OpenedThreads(ThreadCount),
             PrevOpenedThreads(0),
 
             // Frames
@@ -161,8 +161,11 @@ namespace Blokk
             // Set the worker's manager
             Worker::Manager = this;
 
-            // Open starting thread
-            OpenThread();
+            // Open all threads
+            for(uint32_t i = 0; i < ThreadCount; i++)
+            {
+                OpenThread();
+            }
 
             // Get the proper functions
             GetFunctions();
@@ -499,6 +502,7 @@ namespace Blokk
         // Workers
         uint32_t ThreadCount;
         uint32_t OpenedThreads;
+        uint32_t UsedThreads;
         uint32_t PrevOpenedThreads;
 
         bool ThreadOpenedPrevFrame;
@@ -587,36 +591,35 @@ namespace Blokk
         }
 
         // Split a number into x ranges
-        std::vector<IndexRange> GetRanges(
-            uint32_t Length,
-            uint32_t Count
-        )
+        std::vector<IndexRange> GetRanges(uint32_t Length, uint32_t Count)
         {
             if (Count == 0 || Length == 0)
                 return {};
 
             uint32_t NewCount = std::min(Length, Count);
 
-            uint32_t Size = Length / NewCount;
+            uint32_t BaseSize = Length / NewCount;
+            uint32_t Remainder = Length % NewCount; // Find out how many extra items are leftover
 
             std::vector<IndexRange> Result;
             Result.reserve(NewCount);
 
+            uint32_t CurrentStart = 0;
+
             for (uint32_t i = 0; i < NewCount; i++)
             {
-                uint32_t Start = i * Size;
-                uint32_t End =
-                    (i == NewCount - 1)
-                    ? Length
-                    : (i + 1) * Size;
+                // Give 1 extra item from the remainder pool to the first few threads
+                uint32_t CurrentSize = BaseSize + (i < Remainder ? 1 : 0);
+                uint32_t CurrentEnd = CurrentStart + CurrentSize;
 
-                Result.push_back(
-                    IndexRange{Start, End}
-                );
+                Result.push_back(IndexRange{CurrentStart, CurrentEnd});
+                
+                CurrentStart = CurrentEnd; // Roll forward to the next index slot
             }
 
             return Result;
         }
+
 
         #ifndef Blokk_Thread_Control
 

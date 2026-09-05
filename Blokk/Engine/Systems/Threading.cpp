@@ -1,6 +1,9 @@
 #include "EngineClassData.hpp"
 #include <sstream>
 #include <algorithm>
+#include <chrono>
+#include <vector>
+#include <stdexcept>
 
 namespace Blokk
 {
@@ -12,11 +15,6 @@ double ObjectManager::TimeEngineProcesses()
 
     // EngineProcesses-----------------------------------------
 
-    // Camera
-    #ifdef Blokk_CamEnabled
-        UpdateCamPosition();
-    #endif
-
     { // Velocities
 
         #ifdef Blokk_Diagnostics
@@ -25,13 +23,13 @@ double ObjectManager::TimeEngineProcesses()
 
         // Get ranges
         std::vector<IndexRange> VelRanges =
-            GetRanges(DynamicObjectCount, OpenedThreads);
+            GetRanges(DynamicObjectCount, UsedThreads);
 
         // Set function
         Worker::CurrentJob = UpdateRangeOfPositions;
 
         // Loop through
-        uint32_t Count = std::min(OpenedThreads, static_cast<uint32_t>(VelRanges.size()));
+        uint32_t Count = VelRanges.size();
         for (uint32_t i = 0; i < Count; i++)
         {
             Workers[i]->SetRange(VelRanges[i]);
@@ -62,9 +60,9 @@ double ObjectManager::TimeEngineProcesses()
         #endif
 
         // Wait for each to finish
-        for (auto& Worker : Workers)
+        for (uint32_t i = 0; i < Count; i++)
         {
-            Worker->WaitUntilFinished();
+            Workers[i]->WaitUntilFinished();
         }
 
         #ifdef Blokk_Diagnostics
@@ -87,34 +85,34 @@ double ObjectManager::TimeEngineProcesses()
 
             // Get ranges
             std::vector<IndexRange> VisRanges =
-                GetRanges(ObjectCount, OpenedThreads);
+                GetRanges(ObjectCount, UsedThreads);
 
             // Set function
             Worker::CurrentJob = CheckVisibleRange;
 
             // Loop
-            uint32_t Count = std::min(OpenedThreads, static_cast<uint32_t>(VisRanges.size()));
+            uint32_t Count = VisRanges.size();
             for (uint32_t i = 0; i < Count; i++)
             {
                 Workers[i]->SetRange(VisRanges[i]);
             }
 
             // Wait for each to finish
-            for (auto& Worker : Workers)
+            for (uint32_t i = 0; i < Count; i++)
             {
-                Worker->WaitUntilFinished();
+                Workers[i]->WaitUntilFinished();
             }
 
             // Clear idxs
             RenderObjectIdxs.clear();
 
             // Loop through workers
-            for (auto& Worker : Workers)
+            for (uint32_t i = 0; i < Count; i++)
             {
                 RenderObjectIdxs.insert(
                     RenderObjectIdxs.end(),
-                    Worker->IdxResult.begin(),
-                    Worker->IdxResult.end()
+                    Workers[i]->IdxResult.begin(),
+                    Workers[i]->IdxResult.end()
                 );
             }
 
@@ -150,46 +148,61 @@ void ObjectManager::EngineProcess()
 
     if (!OptimalThreadCountReached)
     {
-        if (OpenedThreads == ThreadCount)
+        // If a thread was opened previous frame
+        if (ThreadOpenedPrevFrame)
         {
-            OptimalThreadCountReached = true;
-        }
-        else
-        {
-            // If a thread was opened previous frame
-            if (ThreadOpenedPrevFrame)
+            // If took longer than previous frame
+            if (FrameExecutionTime > PrevFrameTime)
             {
-                // If took longer than previous frame
-                if (FrameExecutionTime > PrevFrameTime)
-                {
-                    // Destroy a thread
-                    DestroyThread();
+                // Stop using a thread if can
+                if(UsedThreads != 1) {
+                    UsedThreads--;
+                }
+                
+                // Update vars
+                ThreadOpenedPrevFrame = false;
+                OptimalThreadCountReached = true;
+            }
 
-                    // Update vars
-                    ThreadOpenedPrevFrame = false;
+            // If took too long
+            else if (FrameExecutionTime > TargetExecutionTime)
+            {
+                // Use another thread if can
+                if(UsedThreads != OpenedThreads) 
+                {
+                    UsedThreads++;
+
+                    // Update var
+                    ThreadOpenedPrevFrame = true;
+                } 
+                else 
+                { // If no more can be opened stop
                     OptimalThreadCountReached = true;
                 }
-
-                // If took too long
-                else if (FrameExecutionTime > TargetExecutionTime)
-                {
-                    // Open another thread
-                    OpenThread();
-
-                    // Update var
-                    ThreadOpenedPrevFrame = true;
-                }
             }
-            else // If a thread wasn't opened the previous frame
+
+            // If took a good time
+            else 
             {
-                // If it took too long
-                if (FrameExecutionTime > TargetExecutionTime)
+                ThreadOpenedPrevFrame = false;
+            }
+        }
+        else // If a thread wasn't opened the previous frame
+        {
+            // If it took too long
+            if (FrameExecutionTime > TargetExecutionTime)
+            {
+                // Use another thread if can
+                if(UsedThreads != OpenedThreads) 
                 {
-                    // Open another thread
-                    OpenThread();
+                    UsedThreads++;
 
                     // Update var
                     ThreadOpenedPrevFrame = true;
+                } 
+                else 
+                { // If no more can be opened stop
+                    OptimalThreadCountReached = true;
                 }
             }
         }
@@ -215,32 +228,16 @@ void ObjectManager::SetThreadCount(uint32_t Count)
             "Blokk error: Thread count must be at least 1."
         );
     }
-    else if (Count > ThreadCount)
+    else if (Count > ThreadCount) // ThreadCount represents max capacity/hardware limits
     {
         throw std::invalid_argument(
             "Blokk error: Requested thread count exceeds hardware thread count."
         );
     }
 
-    // If need to destroy threads
-    if(Count < OpenedThreads)
-    {
-        // Loop 
-        for(uint32_t i = 0; i < OpenedThreads - Count; i++) 
-        {
-            // Destroy
-            DestroyThread();
-        }
-    }
-    else // If need to create threads
-    {
-        // Loop
-        for(uint32_t i = 0; i < Count - OpenedThreads; i++)
-        {
-            // Open
-            OpenThread();
-        }
-    }
+    // Slide active boundaries smoothly instead of allocating/deallocating OS memory
+    UsedThreads = Count;
+    OpenedThreads = Count; 
 }
 
 #endif
