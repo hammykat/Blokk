@@ -160,10 +160,10 @@ namespace Blokk
             #ifdef Blokk_CamEnabled
 
             const __m256 CamX =
-                _mm256_set1_ps(CameraX);
+                _mm256_set1_ps(Camera.X);
 
             const __m256 CamY =
-                _mm256_set1_ps(CameraY);
+                _mm256_set1_ps(Camera.y);
 
             #endif
 
@@ -362,11 +362,11 @@ namespace Blokk
 
                 #ifdef Blokk_CamEnabled
 
-                XMin -= CameraX;
-                XMax -= CameraX;
+                XMin -= Camera.X;
+                XMax -= Camera.X;
 
-                YMin -= CameraY;
-                YMax -= CameraY;
+                YMin -= Camera.y;
+                YMax -= Camera.y;
 
                 #endif
 
@@ -424,10 +424,10 @@ namespace Blokk
             #ifdef Blokk_CamEnabled
 
             const __m128 CamX =
-                _mm_set1_ps(CameraX);
+                _mm_set1_ps(Camera.X);
 
             const __m128 CamY =
-                _mm_set1_ps(CameraY);
+                _mm_set1_ps(Camera.y);
 
             #endif
 
@@ -635,11 +635,11 @@ namespace Blokk
 
                 #ifdef Blokk_CamEnabled
 
-                XMin -= CameraX;
-                XMax -= CameraX;
+                XMin -= Camera.X;
+                XMax -= Camera.X;
 
-                YMin -= CameraY;
-                YMax -= CameraY;
+                YMin -= Camera.y;
+                YMax -= Camera.y;
 
                 #endif
 
@@ -698,10 +698,10 @@ namespace Blokk
             #ifdef Blokk_CamEnabled
 
             const __m512 CamX =
-                _mm512_set1_ps(CameraX);
+                _mm512_set1_ps(Camera.X);
 
             const __m512 CamY =
-                _mm512_set1_ps(CameraY);
+                _mm512_set1_ps(Camera.y);
 
             #endif
 
@@ -894,11 +894,11 @@ namespace Blokk
 
                 #ifdef Blokk_CamEnabled
 
-                XMin -= CameraX;
-                XMax -= CameraX;
+                XMin -= Camera.X;
+                XMax -= Camera.X;
 
-                YMin -= CameraY;
-                YMax -= CameraY;
+                YMin -= Camera.y;
+                YMax -= Camera.y;
 
                 #endif
 

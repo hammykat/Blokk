@@ -177,8 +177,8 @@ namespace Blokk {
 
             // Camera offsets
             #ifdef Blokk_CamEnabled
-            MinX -= CameraX;
-            MaxX -= CameraX;
+            MinX -= Camera.x;
+            MaxX -= Camera.x;
             #endif
 
             if (MaxX > 0 && MinX < ScreenWidth)
@@ -209,7 +209,7 @@ namespace Blokk {
         );
 
         #ifdef Blokk_CamEnabled
-        __m256 CamY = _mm256_set1_ps(CameraY);
+        __m256 CamY = _mm256_set1_ps(Camera.y);
         #endif
 
         std::vector<std::uint32_t> ResultIdx;
@@ -289,8 +289,8 @@ namespace Blokk {
             float YMax = PosY[i] + AnimHeights[i];
 
             #ifdef Blokk_CamEnabled
-            YMin -= CameraY;
-            YMax -= CameraY;
+            YMin -= Camera.y;
+            YMax -= Camera.y;
             #endif
 
             if (YMax > 0 && YMin < ScreenHeight)
@@ -337,8 +337,8 @@ namespace Blokk {
 
             // Camera offsets
             #ifdef Blokk_CamEnabled
-            MinX -= CameraX;
-            MaxX -= CameraX;
+            MinX -= Camera.x;
+            MaxX -= Camera.x;
             #endif
 
             if (MaxX > 0 && MinX < ScreenWidth)
@@ -369,7 +369,7 @@ namespace Blokk {
         );
 
         #ifdef Blokk_CamEnabled
-        __m128 CamY = _mm_set1_ps(CameraY);
+        __m128 CamY = _mm_set1_ps(Camera.y);
         #endif
 
         std::vector<std::uint32_t> ResultIdx;
@@ -447,8 +447,8 @@ namespace Blokk {
             float YMax = PosY[i] + AnimHeights[i];
 
             #ifdef Blokk_CamEnabled
-            YMin -= CameraY;
-            YMax -= CameraY;
+            YMin -= Camera.y;
+            YMax -= Camera.y;
             #endif
 
             if (YMax > 0 && YMin < ScreenHeight)
@@ -495,8 +495,8 @@ namespace Blokk {
 
             // Camera offsets
             #ifdef Blokk_CamEnabled
-            MinX -= CameraX;
-            MaxX -= CameraX;
+            MinX -= Camera.x;
+            MaxX -= Camera.x;
             #endif
 
             if (MaxX > 0 && MinX < ScreenWidth)
@@ -527,7 +527,7 @@ namespace Blokk {
         );
 
         #ifdef Blokk_CamEnabled
-        __m512 CamY = _mm512_set1_ps(CameraY);
+        __m512 CamY = _mm512_set1_ps(Camera.y);
         #endif
 
         std::vector<std::uint32_t> ResultIdx;
@@ -601,8 +601,8 @@ namespace Blokk {
             float YMax = PosY[i] + AnimHeights[i];
 
             #ifdef Blokk_CamEnabled
-            YMin -= CameraY;
-            YMax -= CameraY;
+            YMin -= Camera.y;
+            YMax -= Camera.y;
             #endif
 
             if (YMax > 0 && YMin < ScreenHeight)
