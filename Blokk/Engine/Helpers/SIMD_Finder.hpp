@@ -2,8 +2,21 @@
 
 #include <cstdint>
 
-#if defined(__GNUC__) || defined(__clang__)
-    #include <cpuid.h>
+#if defined(__aarch64__) || defined(_M_ARM64)
+
+    #include <arm_neon.h>
+
+#elif defined(__x86_64__) || defined(__i386__) || \
+      defined(_M_X64) || defined(_M_IX86)
+
+    #if defined(__GNUC__) || defined(__clang__)
+        #include <cpuid.h>
+    #endif
+
+    #if defined(_MSC_VER)
+        #include <intrin.h>
+    #endif
+
 #endif
 
 enum class SIMDLevel
@@ -13,12 +26,27 @@ enum class SIMDLevel
     AVX2,
     AVX512,
 
+    NEON,
+
     Unsupported
 };
 
-#if defined(_MSC_VER)
 
-    #include <intrin.h>
+// ARM64
+#if defined(__aarch64__) || defined(_M_ARM64)
+
+inline SIMDLevel DetectSIMD()
+{
+    // NEON is mandatory on AArch64.
+    return SIMDLevel::NEON;
+}
+
+
+// x86 / x86-64
+#elif defined(__x86_64__) || defined(__i386__) || \
+      defined(_M_X64) || defined(_M_IX86)
+
+    #if defined(_MSC_VER)
 
     inline SIMDLevel DetectSIMD()
     {
@@ -45,40 +73,35 @@ enum class SIMDLevel
         return SIMDLevel::SSE2;
     }
 
-#elif defined(__GNUC__) || defined(__clang__)
+    #elif defined(__GNUC__) || defined(__clang__)
 
     inline SIMDLevel DetectSIMD()
     {
-        #if defined(__x86_64__) || defined(__i386__)
+        // x86/x86-64.
+        // AVX is intentionally disabled for now.
 
-            // x86/x86-64.
-            // AVX is intentionally disabled for now.
+        if (__builtin_cpu_supports("sse2"))
+            return SIMDLevel::SSE2;
 
-            if (__builtin_cpu_supports("sse2"))
-                return SIMDLevel::SSE2;
-
-            return SIMDLevel::Unsupported;
-
-        #elif defined(__aarch64__) || defined(_M_ARM64)
-
-            // ARM64 is not supported yet.
-            // NEON support can be added later.
-            return SIMDLevel::Unsupported;
-
-        #else
-
-            // Unknown architecture.
-            return SIMDLevel::Unsupported;
-
-        #endif
+        return SIMDLevel::Unsupported;
     }
 
-#else
+    #else
 
-    // Unknown compiler/platform.
     inline SIMDLevel DetectSIMD()
     {
         return SIMDLevel::Unsupported;
     }
+
+    #endif
+
+
+// Unknown architecture
+#else
+
+inline SIMDLevel DetectSIMD()
+{
+    return SIMDLevel::Unsupported;
+}
 
 #endif
