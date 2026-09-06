@@ -77,7 +77,7 @@ double ObjectManager::TimeEngineProcesses()
 
     { // Animations
 
-        { // Visibility checks
+        { // Render
 
             #ifdef Blokk_Diagnostics
                 auto StartTime = std::chrono::steady_clock::now();
