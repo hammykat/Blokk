@@ -59,8 +59,10 @@ void ObjectManager::ProcessAddCommand(Vector2 Velocity, Vector2 Position, GameOb
         // Add instance pointer
         ObjectInstances.push_back(Object);
 
+        #ifdef Blokk_Rendering_Enabled
         // Add visibility
         IsVisible.push_back(Visible);
+        #endif
 
         StaticObjectCount++;
     } 
@@ -73,8 +75,10 @@ void ObjectManager::ProcessAddCommand(Vector2 Velocity, Vector2 Position, GameOb
         // Add instance pointer
         ObjectInstances.push_back(Object);
 
+        #ifdef Blokk_Rendering_Enabled
         // Add visibility
         IsVisible.push_back(Visible);
+        #endif
 
         if(StaticObjectCount > 0)
         {
@@ -111,8 +115,10 @@ void ObjectManager::SwapStaticObjects(uint32_t Obj1, uint32_t Obj2)
     // Swap instance pointers
     std::swap(ObjectInstances[Obj1], ObjectInstances[Obj2]);
 
+    #ifdef Blokk_Rendering_Enabled
     // Swap visibility
     std::swap(IsVisible[Obj1], IsVisible[Obj2]);
+    #endif
 
     // Update object's internal vars
     ObjectInstances[Obj1]->EngineIdx = Obj1;
@@ -129,8 +135,10 @@ void ObjectManager::SwapDynamicObjects(uint32_t Obj1, uint32_t Obj2)
     std::swap(XVelocities[Obj1], XVelocities[Obj2]);
     std::swap(YVelocities[Obj1], YVelocities[Obj2]);
 
+    #ifdef Blokk_Rendering_Enabled
     // Swap visibility
     std::swap(IsVisible[Obj1], IsVisible[Obj2]);
+    #endif
 
     // Swap instance pointers
     std::swap(ObjectInstances[Obj1], ObjectInstances[Obj2]);

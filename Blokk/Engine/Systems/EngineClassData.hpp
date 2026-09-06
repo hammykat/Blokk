@@ -4,8 +4,6 @@
 #include <cstdint>
 #include <queue>
 #include <thread>
-#include <immintrin.h>
-#include <intrin.h>
 #include <vector>
 #include <chrono>
 #include <mutex>
@@ -16,6 +14,18 @@
 #include <string>
 #include <memory>
 #include <algorithm>
+
+#if defined(__x86_64__) || defined(__i386__) || \
+    defined(_M_X64) || defined(_M_IX86)
+
+    #include <immintrin.h>
+    #include <intrin.h>
+
+#elif defined(__aarch64__) || defined(_M_ARM64)
+
+    #include <arm_neon.h>
+
+#endif
 
 #include <SDL3/SDL.h>
 
@@ -102,9 +112,9 @@ namespace Blokk
             // Threads
             ThreadOpenedPrevFrame(false),
             ThreadDestroyedPrevFrame(false),
-            OptimalThreadCountReached(false),
+            AdaptiveThreadingEnabled(true),
             ThreadCount(std::thread::hardware_concurrency()),
-            OpenedThreads(0),
+            OpenedThreads(ThreadCount),
             PrevOpenedThreads(0),
 
             // Frames
@@ -139,13 +149,6 @@ namespace Blokk
             StaticObjectCount(0),
             DynamicObjectCount(0)
         {
-            // Throw an error if unsupported
-            if (SIMDRegisterLevel == SIMDLevel::Unsupported)
-            {
-                throw std::runtime_error(
-                    "Blokk requires an x86 CPU with SSE2 support."
-                );
-            }
 
             // Throw an error if no threads were found
             if (ThreadCount == 0)
@@ -161,11 +164,23 @@ namespace Blokk
             // Set the worker's manager
             Worker::Manager = this;
 
-            // Open starting thread
-            OpenThread();
+            // Open all threads
+            for(uint32_t i = 0; i < ThreadCount; i++)
+            {
+                OpenThread();
+            }
 
             // Get the proper functions
             GetFunctions();
+        }
+
+        ~ObjectManager()
+        {
+            // Destroy all threads
+            for(uint32_t i = 0; i < OpenedThreads; i++)
+            {
+                DestroyThread();
+            }
         }
 
         void EngineProcess();
@@ -268,6 +283,7 @@ namespace Blokk
                 case SIMDLevel::AVX512:
                     return 512;
 
+                case SIMDLevel::NEON:
                 case SIMDLevel::SSE2:
                     return 128;
 
@@ -289,6 +305,9 @@ namespace Blokk
                 case SIMDLevel::SSE2:
                     return "sse2";
 
+                case SIMDLevel::NEON:
+                    return "neon";
+
                 default:
                     return "unknown";
             }
@@ -308,7 +327,7 @@ namespace Blokk
             std::cout << "Opened Threads: " << OpenedThreads << '\n';
             std::cout << "Total Threads: " << ThreadCount << '\n';
             std::cout << "Optimal thread count reached: "
-                      << (OptimalThreadCountReached ? "true" : "false")
+                      << (AdaptiveThreadingEnabled ? "true" : "false")
                       << "\n\n";
 
             std::cout << "Object Counts ---------------" << '\n';
@@ -443,13 +462,6 @@ namespace Blokk
         uint32_t ScreenHeight;
         uint32_t ScreenWidth;
 
-        // Camera
-        #ifdef Blokk_CamEnabled
-
-        CameraController Camera;
-
-        #endif
-
         // Positions
         std::vector<float> XPositions;
         std::vector<float> YPositions;
@@ -499,11 +511,12 @@ namespace Blokk
         // Workers
         uint32_t ThreadCount;
         uint32_t OpenedThreads;
+        uint32_t UsedThreads;
         uint32_t PrevOpenedThreads;
 
         bool ThreadOpenedPrevFrame;
         bool ThreadDestroyedPrevFrame;
-        bool OptimalThreadCountReached;
+        bool AdaptiveThreadingEnabled;
 
         double FrameExecutionTime;
         double PrevFrameTime;
@@ -554,6 +567,7 @@ namespace Blokk
 
                     break;
 
+
                 // 512 bit
                 case SIMDLevel::AVX512:
 
@@ -570,8 +584,9 @@ namespace Blokk
 
                     break;
 
+
                 // 128 bit - default
-                default:
+                case SIMDLevel::SSE2:
 
                     #if (Blokk_Visibility_CullType == 0)
                         CheckVisibleRange =
@@ -583,40 +598,72 @@ namespace Blokk
 
                     UpdatePositions =
                         UpdatePositionsFn<SIMDLevel::SSE2>;
+
+                    break;
+
+
+                case SIMDLevel::NEON:
+
+                    #if (Blokk_Visibility_CullType == 0)
+                        CheckVisibleRange =
+                            CheckVisibilityFn_Basic<SIMDLevel::NEON>;
+                    #elif (Blokk_Visibility_CullType == 1)
+                        CheckVisibleRange =
+                            CheckVisibilityFn_Axis<SIMDLevel::NEON>;
+                    #endif
+
+                    UpdatePositions =
+                        UpdatePositionsFn<SIMDLevel::NEON>;
+
+                    break;
+
+
+                // Scalar - default
+                default:
+
+                    #if (Blokk_Visibility_CullType == 0)
+                        CheckVisibleRange =
+                            CheckVisibilityFn_Basic<SIMDLevel::Unsupported>;
+                    #elif (Blokk_Visibility_CullType == 1)
+                        CheckVisibleRange =
+                            CheckVisibilityFn_Axis<SIMDLevel::Unsupported>;
+                    #endif
+
+                    UpdatePositions =
+                        UpdatePositionsFn<SIMDLevel::Unsupported>;
             }
         }
 
         // Split a number into x ranges
-        std::vector<IndexRange> GetRanges(
-            uint32_t Length,
-            uint32_t Count
-        )
+        std::vector<IndexRange> GetRanges(uint32_t Length, uint32_t Count)
         {
             if (Count == 0 || Length == 0)
                 return {};
 
             uint32_t NewCount = std::min(Length, Count);
 
-            uint32_t Size = Length / NewCount;
+            uint32_t BaseSize = Length / NewCount;
+            uint32_t Remainder = Length % NewCount; // Find out how many extra items are leftover
 
             std::vector<IndexRange> Result;
             Result.reserve(NewCount);
 
+            uint32_t CurrentStart = 0;
+
             for (uint32_t i = 0; i < NewCount; i++)
             {
-                uint32_t Start = i * Size;
-                uint32_t End =
-                    (i == NewCount - 1)
-                    ? Length
-                    : (i + 1) * Size;
+                // Give 1 extra item from the remainder pool to the first few threads
+                uint32_t CurrentSize = BaseSize + (i < Remainder ? 1 : 0);
+                uint32_t CurrentEnd = CurrentStart + CurrentSize;
 
-                Result.push_back(
-                    IndexRange{Start, End}
-                );
+                Result.push_back(IndexRange{CurrentStart, CurrentEnd});
+                
+                CurrentStart = CurrentEnd; // Roll forward to the next index slot
             }
 
             return Result;
         }
+
 
         #ifndef Blokk_Thread_Control
 
@@ -642,6 +689,10 @@ namespace Blokk
 
         // Do the engine processes and time it
         double TimeEngineProcesses();
+
+        // Adaptive threading system
+        void StopAdaptiveThreadingSystem();
+        void EnableAdaptiveThreadingSystem();
 
         // Swap 2 objects
         void SwapStaticObjects(uint32_t Obj1, uint32_t Obj2);

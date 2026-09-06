@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
 project(Blokk
-    VERSION 0.1.6
+    VERSION 0.1.8
     LANGUAGES CXX
 )
 
