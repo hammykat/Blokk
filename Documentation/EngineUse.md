@@ -1,8 +1,9 @@
-# Using the engine
+# Using the Engine
 
 ## Table of Contents
 
 * [Engine Requirements](#engine-requirements)
+
   * [Platform Support](#platform-support)
   * [CPU](#cpu)
   * [Memory](#memory)
@@ -11,13 +12,16 @@
   * [Supported Compilers](#supported-compilers)
 * [Configuration Macros](#configuration-macros)
 * [Getting Started](#getting-started)
+
   * [Including Blokk](#including-blokk)
   * [Creating an ObjectManager](#creating-an-objectmanager)
 * [Game Objects](#game-objects)
+
   * [Creating Objects](#creating-objects)
   * [Modifying Objects](#modifying-objects)
 * [Engine Loop](#engine-loop)
 * [Using Blokk With Built-In Rendering](#using-blokk-with-built-in-rendering)
+
   * [Initializing](#initializing)
   * [Creating an ObjectManager](#creating-an-objectmanager-1)
   * [Creating a Window](#creating-a-window)
@@ -31,60 +35,105 @@
 
 ---
 
-## Engine Requirements
+# Engine Requirements
 
-### Platform Support
+## Platform Support
 
-| Platform            | Architecture | Status      |
-| ------------------- | ------------ | ----------- |
-| Windows             | x86-64       | Supported   |
-| Linux               | x86-64       | Untested    |
-| macOS Intel         | x86-64       | Untested    |
-| macOS Apple Silicon | ARM64        | Unsupported |
-| Linux ARM64         | ARM64        | Unsupported |
-| Windows ARM64       | ARM64        | Unsupported |
+Blokk is designed to support both x86-64 and ARM64 architectures.
 
-### CPU
+| Platform            | Architecture | Status    |
+| ------------------- | ------------ | --------- |
+| Windows             | x86-64       | Supported |
+| Linux               | x86-64       | Untested  |
+| macOS Intel         | x86-64       | Untested  |
+| macOS Apple Silicon | ARM64        | Untested  |
+| Linux ARM64         | ARM64        | Untested  |
+| Windows ARM64       | ARM64        | Untested  |
 
-Blokk currently targets x86-64 processors.
+> **Note:** Windows x86-64 is currently the primary tested platform. Other platforms are supported by the engine's architecture-specific code but have not yet been fully tested.
+
+Blokk uses architecture-specific SIMD implementations when available and automatically falls back to scalar implementations when an optimized SIMD implementation is unavailable.
+
+---
+
+## CPU
+
+Blokk supports **x86-64 and ARM64 processors**.
+
+### x86-64
 
 * x86-64 processor
-* SSE2 support required
+* Scalar implementation available
+* SSE2 supported
 * AVX2 supported
 * AVX-512 supported
-* AVX is not supported
-* ARM NEON is not supported
+* AVX is not currently supported as a dedicated SIMD level
 
-Blokk uses SIMD instructions where supported to improve performance. SSE2 is currently required, while AVX2 and AVX-512 can provide additional optimization on compatible processors.
+### ARM64
 
-### Memory
+* ARM64 processor
+* Scalar implementation available
+* ARM NEON supported
 
-No fixed minimum has been established yet.
+SIMD is used as an optimization to improve engine performance on compatible processors. SIMD support is **not required for the engine to operate**.
 
-Required memory depends on the application, asset sizes, and number of objects being managed.
+If a supported SIMD instruction set is unavailable, Blokk uses a scalar implementation instead.
 
-* Recommended minimum: 4 GB RAM
+This allows the same engine systems to operate across a wider range of processors without requiring a specific SIMD instruction set.
 
-### Graphics
+---
 
-Blokk's built-in rendering system uses SDL3 and SDL_image.
+## Memory
 
-* GPU with a SDL3-supported graphics API
-* Hardware-accelerated graphics recommended
+No fixed minimum memory requirement has been established yet.
 
-If you are using a different rendering framework, Blokk can still be used for its object and engine systems. See [Using Blokk Without Built-In Rendering](#using-blokk-without-built-in-rendering).
+Actual memory requirements depend on the application, including:
 
-### Development Requirements
+* Number of objects
+* Number of animations and textures
+* Asset sizes
+* Rendering configuration
+* Enabled engine systems
+
+**Recommended minimum:** 4 GB RAM.
+
+Applications with large numbers of objects or large assets may require additional memory.
+
+---
+
+## Graphics
+
+Blokk's built-in rendering system uses **SDL3** and **SDL_image**.
+
+The built-in renderer requires:
+
+* A GPU supported by SDL3
+* A graphics API supported by the target SDL3 configuration
+* Hardware acceleration is recommended
+
+Blokk's core engine does not require the built-in renderer.
+
+If you use another rendering framework, Blokk can still be used for its object management and engine systems.
+
+See [Using Blokk Without Built-In Rendering](#using-blokk-without-built-in-rendering).
+
+---
+
+## Development Requirements
 
 To develop with Blokk, you will need:
 
-* C++20-compatible compiler
+* A C++20-compatible compiler
 * CMake
 * Git
-* SDL3
-* SDL_image
+* SDL3 when using the built-in rendering system
+* SDL_image when using the built-in rendering system
 
-### Supported Compilers
+Blokk's dependencies may be provided through the project's configured dependency system.
+
+---
+
+## Supported Compilers
 
 Blokk is intended to work with:
 
@@ -92,9 +141,11 @@ Blokk is intended to work with:
 * GCC
 * Clang
 
+The compiler must support **C++20**.
+
 ---
 
-## Configuration Macros
+# Configuration Macros
 
 Blokk provides several compile-time configuration options. These allow you to enable or select engine features before the engine is included.
 
@@ -113,19 +164,19 @@ For example:
 
 The available configuration macros are:
 
-* `Blokk_Visibility_CullType` - Selects the visibility-culling system. `0` uses basic culling and `1` uses axis culling. See [Render Culling Systems](RenderCullingSystems.md).
-* `Blokk_Diagnostics` - Enables engine diagnostics. See [Diagnostics](Diagnostics.md).
-* `Blokk_CamEnabled` - Enables the camera system. See [Camera](Camera.md).
-* `Blokk_Thread_Control` - Enables manual control over the engine's threading system. See [Thread Control](ThreadControl.md).
-* `Blokk_Rendering_Enabled` - Enables Blokk's built-in rendering system.
+* `Blokk_Visibility_CullType` — Selects the visibility-culling system. `0` uses basic culling and `1` uses axis culling. See [Render Culling Systems](RenderCullingSystems.md).
+* `Blokk_Diagnostics` — Enables engine diagnostics. See [Diagnostics](Diagnostics.md).
+* `Blokk_CamEnabled` — Enables the camera system. See [Camera](Camera.md).
+* `Blokk_Thread_Control` — Enables manual control over the engine's threading system. See [Thread Control](ThreadControl.md).
+* `Blokk_Rendering_Enabled` — Enables Blokk's built-in rendering system.
 
 Only define the features your project needs. This allows Blokk to avoid enabling systems that your project does not use.
 
 ---
 
-## Getting Started
+# Getting Started
 
-Once Blokk is configured, you can begin using the engine in your project.
+Once Blokk is configured, you can begin using the engine.
 
 Most Blokk classes and functions are contained within the `Blokk` namespace.
 
@@ -133,7 +184,7 @@ Most Blokk classes and functions are contained within the `Blokk` namespace.
 #include <Blokk.hpp>
 ```
 
-### Including Blokk
+## Including Blokk
 
 Include Blokk after defining any configuration macros you want to use:
 
@@ -153,9 +204,11 @@ If you are using Blokk's built-in rendering system, enable it before including B
 
 You do not need to include SDL3 or SDL_image directly when using Blokk's public rendering API.
 
-### Creating an ObjectManager
+---
 
-The `ObjectManager` is the main interface for managing objects and running the engine.
+## Creating an ObjectManager
+
+The `ObjectManager` is the primary interface for managing objects and processing the engine.
 
 Create an instance by passing a `ManagerCreation` structure:
 
@@ -178,18 +231,18 @@ struct ManagerCreation
 };
 ```
 
-* `ScreenDimensions` - The dimensions of the screen used by the rendering system.
-* `FPS` - The target FPS used for the engine's default timing. Defaults to `30`.
+* `ScreenDimensions` — The dimensions of the screen used by the rendering system.
+* `FPS` — The target FPS used by the engine's default timing. Defaults to `30`.
 
 Once the `ObjectManager` has been created, you can begin creating objects and processing the engine.
 
 ---
 
-## Game Objects
+# Game Objects
 
 Game objects in Blokk are represented by instances of the `GameObject` class.
 
-### Creating Objects
+## Creating Objects
 
 When creating a `GameObject`, you can provide starting values using `ObjectCreationParams`.
 
@@ -208,7 +261,9 @@ The starting position and velocity default to `{0, 0}` when they are not specifi
 
 Once the object has been created, you can interact with it using its member functions.
 
-### Modifying Objects
+---
+
+## Modifying Objects
 
 Blokk provides functions for getting, setting, and changing object data.
 
@@ -220,7 +275,7 @@ Player.SetVelocity(Vector2{5, 6});
 std::cout << Player.GetVelocityX();
 ```
 
-The object directly accesses the engine's underlying object data, allowing changes made through the `GameObject` interface to be reflected in the engine.
+The `GameObject` interface accesses the engine's underlying object data, allowing changes made through the object interface to be reflected in the engine.
 
 For a complete list of available functions, see the [GameObject Function List](GameObjectFunctions.md).
 
@@ -228,7 +283,7 @@ For a deeper look at how Blokk stores and processes objects, see the [Engine Arc
 
 ---
 
-## Engine Loop
+# Engine Loop
 
 Blokk is designed to fit naturally into a game loop.
 
@@ -246,13 +301,13 @@ RenderObjects()
 Present()
 ```
 
-### `EngineProcess()`
+## `EngineProcess()`
 
 Processes the engine for the current frame.
 
 This is where Blokk updates its internal object data and runs the engine's enabled systems.
 
-### `RenderObjects()`
+## `RenderObjects()`
 
 Renders the objects managed by Blokk.
 
@@ -412,7 +467,7 @@ The window passed to the renderer is destroyed automatically when the renderer i
 
 ---
 
-## Rendering
+# Rendering
 
 Rendering a frame requires **three steps**:
 
@@ -422,7 +477,7 @@ Renderer.RenderObjects();
 Renderer.Present();
 ```
 
-### `ClearScreen()`
+## `ClearScreen()`
 
 Clears the screen before rendering the next frame:
 
@@ -430,7 +485,7 @@ Clears the screen before rendering the next frame:
 Renderer.ClearScreen();
 ```
 
-### `RenderObjects()`
+## `RenderObjects()`
 
 Renders all objects currently registered for rendering:
 
@@ -449,7 +504,7 @@ If the camera system is enabled, the camera position is also applied automatical
 
 See [Camera](Camera.md) for more information about the camera system.
 
-### `Present()`
+## `Present()`
 
 Displays the completed frame:
 
@@ -457,7 +512,9 @@ Displays the completed frame:
 Renderer.Present();
 ```
 
-### Setting the Clear Color
+---
+
+## Setting the Clear Color
 
 You can change the color used when clearing the screen:
 
@@ -484,7 +541,7 @@ Alpha defaults to `255`.
 
 ---
 
-## Animations
+# Animations
 
 Blokk uses **individual image files** for animation frames.
 
@@ -503,7 +560,7 @@ Renderer.CreateAnimation(
 
 Each image is loaded as a texture and stored by the engine.
 
-### Creating an Empty Animation
+## Creating an Empty Animation
 
 You can create an animation without adding frames:
 
@@ -642,6 +699,10 @@ int main()
 
 Now that you have a basic Blokk project running, the following documentation covers the engine's individual systems in more detail:
 
-* [GameObject Functions](GameObjectFunctions.md) - Complete list of `GameObject` functions.
-* [Engine Architecture](EngineArchitecture.md) - How Blokk internally manages and processes objects.
-* [Configuration Macros](ConfigurationMacros.md) - Explains different configurations, like camera, render culling, threads, etc.
+* [GameObject Functions](GameObjectFunctions.md) — Complete list of `GameObject` functions.
+* [Engine Architecture](EngineArchitecture.md) — How Blokk internally manages and processes objects.
+* [Configuration Macros](ConfigurationMacros.md) — Explains available configuration options, including camera, render culling, threading, diagnostics, and rendering.
+* [Camera](Camera.md) — Learn how to use Blokk's camera system.
+* [Render Culling Systems](RenderCullingSystems.md) — Learn about Blokk's available visibility-culling systems.
+* [Thread Control](ThreadControl.md) — Learn how to control the engine's threading system.
+* [Diagnostics](Diagnostics.md) — Learn how to inspect engine diagnostics.
