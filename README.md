@@ -94,7 +94,7 @@ The camera supports:
 * Changing its X and Y position
 * Accessing camera position through the `ObjectManager`
 * Camera-aware rendering
-* Camera-aware visibility culling
+* Camera-aware visibility culling (Basic + Axis)
 
 ## Documentation
 
@@ -131,23 +131,25 @@ If you want to contribute, see the project's contribution guidelines in [`CONTRI
 
 ## Requirements
 
-| Component            | Requirement                       |
-| -------------------- | --------------------------------- |
-| **CPU Architecture** | x86 / x86-64                      |
-| **SIMD**             | SSE2                              |
-| **AVX**              | Not required                      |
-| **AVX2**             | Not required                      |
-| **AVX-512**          | Not required                      |
-| **NEON / ARM**       | Not currently supported           |
-| **OS**               | Windows / Linux / macOS*          |
-| **RAM**              | No hard minimum established       |
-| **GPU**              | SDL3-compatible graphics hardware |
-| **C++**              | C++20                             |
-| **Build System**     | CMake                             |
-| **Compiler**         | MSVC, GCC, or Clang               |
+| Component            | Requirement                         |
+| -------------------- | ----------------------------------- |
+| **CPU Architecture** | x86-64 or ARM64                     |
+| **SIMD**             | Optional optimization               |
+| **SSE2**             | Supported                           |
+| **AVX2**             | Supported                           |
+| **AVX-512**          | Supported                           |
+| **NEON / ARM**       | Supported on ARM64                  |
+| **Scalar Fallback**  | Supported on all platforms          |
+| **OS**               | Windows, Linux, macOS*              |
+| **RAM**              | 4 GB recommended minimum            |
+| **GPU**              | SDL3-compatible graphics hardware** |
+| **C++**              | C++20                               |
+| **Build System**     | CMake                               |
+| **Compiler**         | MSVC, GCC, or Clang                 |
 
-* Platform support may vary depending on the current SDL3 configuration and engine implementation.
+* Windows x86-64 is currently the primary tested platform. Linux x86-64, macOS x86-64, macOS ARM64, Linux ARM64, and Windows ARM64 are currently untested.
 
+** Required when using Blokk's built-in rendering system.
 
 ## License
 

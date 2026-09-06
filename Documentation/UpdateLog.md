@@ -1,3 +1,67 @@
+# v0.1.8
+> 9/6/2026
+
+## Cross-Platform Compatibility
+
+Blokk v0.1.8 is focused on making the engine more portable, resilient, and capable of taking advantage of different CPU architectures.
+
+This update introduces **NEON support**, improves SIMD detection and fallback behavior, and strengthens platform-specific guardrails throughout the engine.
+
+### SIMD & CPU Support
+
+* Added **ARM NEON support** for compatible ARM64 platforms.
+* Added **scalar implementations** for systems where supported SIMD instructions are unavailable.
+* Unsupported SIMD hardware no longer causes an error; Blokk can fall back to scalar implementations instead.
+* Added dedicated SIMD branches for different instruction sets, including SSE2 and NEON.
+* Improved SIMD detection and architecture-specific handling.
+* Added necessary architecture guards, declarations, and includes.
+* Added NEON implementations to relevant engine systems, including:
+
+  * Visibility / render culling
+  * Velocity processing
+  * Animation processing
+  * Diagnostics
+
+Blokk now treats SIMD as an optimization rather than a requirement, allowing the engine to remain functional across a wider range of hardware.
+
+## Threading Improvements
+
+The threading system has received a significant architectural update.
+
+* Added persistent worker threads.
+* Worker threads are created once and reused instead of repeatedly being destroyed and recreated.
+* Added thread control functions.
+* Improved handling of changing workloads.
+* Added proper cleanup when the engine is destroyed.
+* Reduced unnecessary thread-management overhead.
+
+These changes provide a stronger foundation for future parallel engine systems and help avoid the cost of repeatedly creating and destroying threads.
+
+## Rendering & Camera
+
+* Added camera support to basic render culling.
+* Improved visibility handling with architecture-specific implementations.
+* Added additional guardrails around rendering-related functionality.
+* Improved the separation between rendering-enabled and rendering-disabled configurations.
+
+## Engine Reliability
+
+* Added additional include guards and required includes.
+* Added platform-specific guardrails to declarations and definitions.
+* Fixed variable-access bugs.
+* Removed duplicated camera state.
+* Condensed and cleaned up several implementations.
+* Improved behavior when optional engine features are disabled.
+
+## Summary
+
+**v0.1.8 is a cross-platform compatibility and architecture-focused release.**
+
+The goal of this update is to make Blokk more adaptable to different hardware while maintaining a reliable fallback when hardware-specific optimizations aren't available.
+
+With **ARM NEON support, scalar SIMD fallbacks, improved SIMD detection, persistent worker threads, and stronger platform guardrails**, Blokk is better prepared to run across different architectures and serve as a foundation for future performance improvements.
+
+
 # v0.1.7
 > 9/3/2026
 
